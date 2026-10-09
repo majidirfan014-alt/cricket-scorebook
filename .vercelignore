@@ -1,0 +1,6 @@
+.qodo/
+*.log
+.git/
+Thumbs.db
+.vercel/
+node_modules/

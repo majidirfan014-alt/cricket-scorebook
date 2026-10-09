@@ -49,6 +49,15 @@ table{border-collapse:collapse;width:100%}
 }
 #topbar .spacer{flex:1}
 .btn-live{background:#fef3c7;color:#92400e;padding:6px 12px;border-radius:8px;font-weight:700;font-size:13px}
+.cloud-pill{
+  padding:5px 11px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap;
+  background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.26);opacity:.95
+}
+.cloud-pill.ok{background:#dcfce7;color:#166534;border-color:transparent}
+.cloud-pill.busy{background:rgba(255,255,255,.18);color:#fff}
+.cloud-pill.warn{background:#fef3c7;color:#92400e;border-color:transparent}
+.cloud-pill.err{background:#fee2e2;color:#991b1b;border-color:transparent}
+.cloud-pill.off{background:rgba(255,255,255,.1);color:#cbd5e1;border-color:rgba(255,255,255,.18)}
 
 #navbar{
   background:var(--bg2);display:flex;gap:2px;padding:0 8px;overflow-x:auto;
@@ -108,6 +117,10 @@ table{border-collapse:collapse;width:100%}
 .field input:focus,.field select:focus,.field textarea:focus{outline:2px solid #5eead4;border-color:var(--accent)}
 .field .hint{font-size:11.5px;color:var(--muted)}
 .form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:12px}
+/* baris form berisi satu field: menempati kolom kiri (mengikuti tata letak dua kolom),
+   turun jadi satu kolom di layar sempit */
+.form-row.row-half{grid-template-columns:1fr 1fr}
+@media(max-width:640px){.form-row.row-half{grid-template-columns:1fr}}
 
 .seg{display:inline-flex;border:1.5px solid var(--line);border-radius:9px;overflow:hidden}
 .seg button{padding:8px 18px;font-size:13px;font-weight:700;background:#fff;color:var(--muted)}
@@ -370,62 +383,125 @@ table{border-collapse:collapse;width:100%}
   display:flex;align-items:center;justify-content:center;font-size:22px;color:#94a3b8;flex:none}
 .at-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
 .at-toolbar input{padding:9px 12px;border:1.5px solid var(--line);border-radius:9px;min-width:240px;flex:1;max-width:420px}
+.at-toolbar select{padding:9px 12px;border:1.5px solid var(--line);border-radius:9px;background:#fff;
+  font-size:13.5px;max-width:210px;min-width:150px}
+.at-toolbar select:focus{outline:2px solid #5eead4;border-color:var(--accent)}
+/* tabel daftar: gulir horizontal di layar sempit (kolom tetap lebar penuh) */
+.at-tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+/* label field: keterangan "(opsional)" ditulis apa adanya, tidak ikut huruf besar */
+.field label .opt-hint{text-transform:none;letter-spacing:0;font-weight:650;opacity:.8}
+/* pilihan radio Jenis Kelamin */
+.radio-row{display:flex;gap:10px;flex-wrap:wrap}
+.radio{
+  display:flex;align-items:center;gap:7px;padding:9px 13px;border:1.5px solid var(--line);
+  border-radius:10px;background:#fff;font-size:13.5px;font-weight:700;color:var(--ink);
+  cursor:pointer;flex:1;min-width:140px
+}
+.radio input{width:16px;height:16px;margin:0;accent-color:#0f766e;flex:none}
+.radio:has(input:checked){border-color:#0f766e;background:#ecfdf5;color:#115e59;box-shadow:0 0 0 1px #0f766e inset}
+.field.has-err .radio{border-color:#dc2626;background:#fef2f2}
 .at-actions{display:flex;gap:6px;flex-wrap:wrap}
 .at-nia{font-family:Consolas,monospace;font-weight:800;color:#0f766e;letter-spacing:.4px;white-space:nowrap}
 
-/* kartu identitas atlet — ukuran asli 85,6 x 54 mm */
+/* kartu identitas atlet — ukuran cetak asli 85,6 x 54 mm
+   Semua ukuran memakai --u = 1/856 lebar kartu (10 --u = 1 mm pada cetak asli),
+   sehingga tampilan layar, cetak/PDF (85,6 x 54 mm) dan PNG memakai tata letak sama. */
 .idcard-wrap{display:flex;flex-direction:column;align-items:center;gap:14px}
 .idcard{
-  width:85.6mm;height:54mm;background:#fff;border-radius:3mm;overflow:hidden;flex:none;
-  box-shadow:0 8px 26px rgba(15,23,42,.22);display:flex;flex-direction:column;
-  font-family:"Segoe UI",Arial,Helvetica,sans-serif;color:#0f172a
+  --u: calc(var(--card-w,85.6mm) / 856);
+  --val-units:27; --lbl-units:22; --gap-units:10;
+  width:var(--card-w,85.6mm);
+  height:calc(var(--u) * 540);
+  background:#fff;border-radius:calc(var(--u) * 30);overflow:hidden;flex:none;
+  box-shadow:0 10px 30px rgba(15,23,42,.22);display:flex;flex-direction:column;
+  font-family:"Segoe UI",Arial,Helvetica,sans-serif;color:#0b1220
 }
 .idcard-head{background:linear-gradient(90deg,#115e59,#0f766e 60%,#134e4a);color:#fff;
-  padding:1.5mm 3mm 1.3mm;flex:none}
-.idcard-title{font-size:3.1mm;font-weight:800;letter-spacing:.5px;line-height:1.15}
-.idcard-sub{font-size:1.95mm;opacity:.93;margin-top:.45mm;line-height:1.2;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.idcard-body{flex:1;display:flex;gap:3mm;padding:2.2mm 3mm;min-height:0}
-.idcard-photo{width:23mm;flex:none}
-.idcard-photo img{width:23mm;height:30.7mm;object-fit:cover;display:block;
-  border:.45mm solid #0f766e;border-radius:1.4mm;background:#f1f5f9}
-.idcard-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:.9mm;justify-content:center}
-.idcard-nia{background:#ecfdf5;border:.35mm solid #99f6e4;border-radius:1.1mm;padding:.9mm 1.8mm}
-.idcard-nia span{display:block;font-size:1.55mm;font-weight:750;letter-spacing:.7px;color:#0f766e}
-.idcard-nia b{display:block;font-size:4.1mm;font-weight:850;letter-spacing:.9px;color:#115e59;line-height:1.15}
-.idcard-row{display:flex;gap:1.4mm;align-items:baseline;line-height:1.18}
-.idcard-row label{font-size:1.65mm;font-weight:750;color:#64748b;width:20mm;flex:none;
-  text-transform:uppercase;letter-spacing:.2px}
-.idcard-row div{font-size:2.55mm;font-weight:700;min-width:0;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  padding:calc(var(--u) * 13) calc(var(--u) * 30) calc(var(--u) * 11);flex:none}
+.idcard-title{font-size:calc(var(--u) * 31);font-weight:800;letter-spacing:.4px;line-height:1.15}
+.idcard-sub{font-size:calc(var(--u) * 22);opacity:.97;margin-top:calc(var(--u) * 4);
+  line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.idcard-body{flex:1;display:flex;gap:calc(var(--u) * 30);
+  padding:calc(var(--u) * 20) calc(var(--u) * 30);min-height:0}
+
+/* kotak foto: kotak berbingkai yang selalu terisi (foto ATAU placeholder).
+   Ukurannya ikut menyusut (bukan hurufnya) bila data atlet sangat panjang —
+   diatur lewat --photo-w / --photo-h oleh fitCardInfo(). */
+.idcard-photo{
+  width:calc(var(--u) * var(--photo-w,230));
+  height:calc(var(--u) * var(--photo-h,307));
+  flex:none;position:relative;
+  border:calc(var(--u) * 4.5) solid #0f766e;border-radius:calc(var(--u) * 14);
+  background:#e6edf3;overflow:hidden
+}
+.idcard-photo img{width:100%;height:100%;object-fit:cover;display:block}
+.idcard-photo .photo-ph{
+  width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:calc(var(--u) * 8);background:#e6edf3;color:#475569;text-align:center;
+  padding:calc(var(--u) * 8)
+}
+.idcard-photo .photo-ph svg{width:calc(var(--u) * 92);height:calc(var(--u) * 92);fill:#9aa8b7}
+.idcard-photo .photo-ph span{font-size:calc(var(--u) * 22);font-weight:800;
+  line-height:1.15;letter-spacing:.2px}
+
+/* kolom kanan: label DI ATAS isi, tanpa elipsis (teks panjang turun baris) */
+.idcard-info{
+  flex:1;min-width:0;display:flex;flex-direction:column;
+  gap:calc(var(--u) * var(--gap-units));justify-content:center
+}
+.idcard-nia{
+  background:#ecfdf5;border:calc(var(--u) * 3.5) solid #99f6e4;border-radius:calc(var(--u) * 11);
+  padding:calc(var(--u) * 8) calc(var(--u) * 16);flex:none;min-width:0
+}
+.idcard-nia span{display:block;font-size:calc(var(--u) * var(--lbl-units));font-weight:800;
+  letter-spacing:.6px;color:#134e4a;line-height:1.2}
+.idcard-nia b{display:block;font-size:calc(var(--u) * 41);font-weight:850;letter-spacing:.8px;
+  color:#115e59;line-height:1.12;overflow-wrap:anywhere}
+.idc-field{min-width:0}
+.idc-field > label{
+  display:block;font-size:calc(var(--u) * var(--lbl-units));font-weight:800;color:#134e4a;
+  text-transform:uppercase;letter-spacing:.3px;line-height:1.2;
+  margin-bottom:calc(var(--u) * 3)
+}
+.idc-val{
+  font-size:calc(var(--u) * var(--val-units));font-weight:800;color:#0b1220;
+  line-height:1.16;white-space:normal;overflow-wrap:anywhere;word-break:normal
+}
+.idc-duo{display:grid;grid-template-columns:1fr 1fr;gap:calc(var(--u) * 16);min-width:0}
+.idc-duo .idc-field{min-width:0}
 
 /* pita periode di bagian bawah kartu depan */
 .idcard-periode{
   flex:none;background:#0f766e;color:#fff;text-align:center;
-  padding:.95mm 2mm 1.05mm;font-size:2.2mm;font-weight:800;letter-spacing:1px;
+  padding:calc(var(--u) * 9) calc(var(--u) * 20) calc(var(--u) * 10);
+  font-size:calc(var(--u) * 24);font-weight:800;letter-spacing:1px;
   text-transform:uppercase
 }
 
-/* sisi belakang kartu: aturan penggunaan */
-.idcard-back .idcard-head{padding:1.4mm 3mm 1.2mm}
-.idcard-rules{flex:1;min-height:0;overflow:hidden;padding:1.6mm 3mm .6mm}
-.idcard-rules ol{margin:0;padding-left:4.6mm}
+/* sisi belakang kartu: aturan penggunaan (isi teks tidak diubah) */
+.idcard-rules{flex:1;min-height:0;overflow:hidden;padding:calc(var(--u) * 16) calc(var(--u) * 30) calc(var(--u) * 6)}
+.idcard-rules ol{margin:0;padding-left:calc(var(--u) * 46)}
 .idcard-rules li{
-  font-size:2.3mm;line-height:1.34;color:#0f172a;font-weight:600;
-  margin-bottom:.85mm;padding-left:.5mm
+  font-size:calc(var(--u) * 25);line-height:1.32;color:#0f172a;font-weight:650;
+  margin-bottom:calc(var(--u) * 8);padding-left:calc(var(--u) * 5);overflow-wrap:anywhere
 }
 .idcard-rules li::marker{color:#0f766e;font-weight:800}
 .idcard-foot{
-  flex:none;border-top:.3mm solid #e2e8f0;background:#f8fafc;
-  padding:.95mm 3mm;font-size:1.95mm;font-weight:750;color:#64748b;
-  letter-spacing:.7px;text-align:center
+  flex:none;border-top:calc(var(--u) * 3) solid #e2e8f0;background:#f8fafc;
+  padding:calc(var(--u) * 10) calc(var(--u) * 30);font-size:calc(var(--u) * 22);
+  font-weight:800;color:#475569;letter-spacing:.7px;text-align:center
 }
 
-/* preview kartu di modal (diperbesar agar terbaca; cetak tetap ukuran asli) */
-#cardStage{display:flex;justify-content:center;padding:12px 0 22mm}
-#cardStage > .idcard{transform:scale(1.32);transform-origin:top center}
-@media(max-width:820px){ #cardStage > .idcard{transform:scale(1.05);padding-bottom:4mm} #cardStage{padding-bottom:8mm} }
-@media(max-width:520px){ #cardStage > .idcard{transform:scale(.86);margin-bottom:-8mm} #cardStage{padding-bottom:0} }
+/* preview kartu di modal: lebar 560px di laptop, menyesuaikan layar di HP.
+   Persentase (%) TIDAK boleh dipakai di --card-w: nilai % ikut berubah arti
+   tergantung properti (font-size, height, width) sehingga kartu jadi gepeng.
+   Sebagai gantinya pakai satuan container (cqw) yang selalu merujuk ke lebar
+   kontainer; #cardStage dibuat container agar 100cqw = lebar modal. */
+#cardStage{
+  display:flex;justify-content:center;padding:12px 0 12px;
+  min-width:0;width:100%;container-type:inline-size
+}
+#cardStage > .idcard{--card-w:min(560px,100cqw)}
 
 /* header modul Daftar Atlet (berdiri sendiri, tanpa menu Score Book) */
 .at-topbar{
@@ -442,14 +518,24 @@ body.route-athletes #navbar,
 body.route-athletes #main{display:none !important}
 
 @media print{
+  /* hanya isi #print-root yang dicetak (kartu, lembar skor, performa) */
+  #atletModule{display:none !important}
   #print-root .idcard-wrap{padding:0;gap:0;display:block}
-  #print-root .idcard{box-shadow:none;border:1px solid #000;border-radius:0;margin:0 auto;transform:none}
-  #print-root .idcard-page{
-    width:85.6mm;height:54mm;overflow:hidden;
-    page-break-after:always;break-after:page;
-    display:flex;align-items:center;justify-content:center
-  }
-  #print-root .idcard-page:last-child{page-break-after:auto;break-after:auto}
+}
+/* Kartu di #print-root: aturan ini sengaja TIDAK diletakkan di dalam @media print
+   supaya pengukuran offscreen saat printAthleteCard() (media layar) memakai
+   box yang sama persis dengan hasil cetak. box-sizing:border-box dipakai agar
+   tepi kartu tidak melebihi 85,6 x 54 mm (kalau tidak, PDF jadi 4-5 halaman
+   karena kartu sedikit lebih lebar/tinggi daripada halaman). */
+#print-root .idcard-page{
+  box-sizing:border-box;width:100%;height:54mm;overflow:hidden;
+  page-break-after:always;break-after:page;
+  display:flex;align-items:center;justify-content:center
+}
+#print-root .idcard-page:last-child{page-break-after:auto;break-after:auto}
+#print-root .idcard{
+  --card-w:85.6mm;box-sizing:border-box;width:85.6mm;height:54mm;
+  box-shadow:none;border:1px solid #000;border-radius:0;margin:0 auto;transform:none
 }
 .hintbar{background:#e0f2fe;border:1px solid #7dd3fc;color:#075985;border-radius:10px;padding:10px 13px;font-size:13px;margin-bottom:12px}
 .warnbar{background:#fef3c7;border:1px solid #fcd34d;color:#92400e;border-radius:10px;padding:10px 13px;font-size:13px;margin-bottom:12px}
@@ -650,6 +736,7 @@ body.route-landing #main{display:none !important}
     <div>Cricket Score Book</div>
   </a>
   <div class="match-pill" id="topMatchPill">Tidak ada pertandingan aktif</div>
+  <div class="cloud-pill off" id="cloudPill" title="Status sinkronisasi Firebase Cloud">☁️ Tanpa cloud</div>
   <div class="spacer"></div>
   <button class="btn-home" id="btnHome">🏠 Beranda</button>
   <button class="btn-live" id="btnOpenLive">📺 Live View</button>
@@ -694,6 +781,10 @@ body.route-landing #main{display:none !important}
 
 <div class="toast-wrap" id="toastWrap"></div>
 
+<!-- Firebase compat SDK (Cloud sync Firestore) — bila gagal dimuat, aplikasi tetap jalan dengan localStorage -->
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+
 <script>
 "use strict";
 /* =====================================================================
@@ -733,10 +824,42 @@ let cfgDirtyMap = {};   // matchId -> { maxOversPerBowler, maxWickets } : penand
 function cfgDirtyOf(id){ return cfgDirtyMap[id] = cfgDirtyMap[id] || { maxOversPerBowler:false, maxWickets:false }; }
 let liveChannel = null;
 
-function saveDB(){
+/* Signature per entitas — untuk mendeteksi bagian mana yang berubah,
+   menstempel updatedAt, dan mencegah echo push dari hasil sinkron cloud */
+let matchSig = {}, settingsSig = '', currentIdSig = null, dbPayloadSig = null;
+function refreshSyncSigs(){
   try{
-    localStorage.setItem(STORE_KEY, JSON.stringify(DB));
-  }catch(e){ toast('Gagal menyimpan data: '+e.message,'err'); }
+    const sigs = {};
+    for(const id in DB.matches){ sigs[id] = JSON.stringify(DB.matches[id]); }
+    matchSig = sigs;
+    settingsSig = JSON.stringify(DB.settings);
+    currentIdSig = DB.currentMatchId;
+    dbPayloadSig = JSON.stringify(DB);
+  }catch(e){ console.warn('refreshSyncSigs', e); }
+}
+
+function saveDB(){
+  let payload;
+  try{ payload = JSON.stringify(DB); }
+  catch(e){ toast('Gagal menyimpan data: '+e.message,'err'); return; }
+  if(payload === dbPayloadSig) return;            // tidak ada perubahan
+  const now = Date.now();
+  try{
+    for(const id in DB.matches){
+      const m = DB.matches[id];
+      const ms = JSON.stringify(m);
+      if(matchSig[id] !== ms){ m.updatedAt = now; matchSig[id] = JSON.stringify(m); }
+    }
+    const ss = JSON.stringify(DB.settings);
+    if(ss !== settingsSig){ settingsSig = ss; DB.settingsUpdatedAt = now; }
+    if(DB.currentMatchId !== currentIdSig){ currentIdSig = DB.currentMatchId; DB.appUpdatedAt = now; }
+    payload = JSON.stringify(DB);
+  }catch(e){ toast('Gagal menyimpan data: '+e.message,'err'); return; }
+  try{
+    localStorage.setItem(STORE_KEY, payload);
+    dbPayloadSig = payload;
+  }catch(e){ toast('Gagal menyimpan data: '+e.message,'err'); return; }
+  scheduleCloudPush();
 }
 function loadDB(){
   try{
@@ -749,6 +872,7 @@ function loadDB(){
       DB.settings.sixes = Object.assign(clone(DEFAULT_SETTINGS.sixes), (parsed.settings||{}).sixes||{});
     }
   }catch(e){ console.warn('loadDB',e); }
+  refreshSyncSigs();
 }
 function toast(msg,kind){
   const w = $('#toastWrap');
@@ -764,9 +888,10 @@ function confirmDialog(title, msg, onYes, yesLabel){
     {label:yesLabel||'Ya, lanjutkan', cls:'danger', fn:()=>{ closeModal(); onYes&&onYes(); }}
   ]);
 }
-function openModal(title, bodyHtml, buttons){
+function openModal(title, bodyHtml, buttons, opts){
   $('#modalTitle').textContent = title;
   $('#modalBody').innerHTML = bodyHtml;
+  $('#modalBox').style.maxWidth = (opts && opts.wide) ? '660px' : '';
   const foot = $('#modalFoot'); foot.innerHTML='';
   (buttons||[{label:'Tutup',cls:'secondary',fn:closeModal}]).forEach(b=>{
     const el = document.createElement('button');
@@ -1338,6 +1463,403 @@ window.addEventListener('storage', e=>{
     if($('#view-performa').classList.contains('active')) renderPerforma();
   }
 });
+
+/* =====================================================================
+   PART 3B — CLOUD SYNC (Firebase Firestore, realtime dua arah)
+   Struktur koleksi:
+     matches/{id}        : objek match + updatedAt
+     athletes/{id}       : objek atlet + updatedAt
+     meta/settings       : { data, updatedAt }
+     meta/app            : { currentMatchId, updatedAt }
+     meta/athleteCounter : { seq, updatedAt }
+   Konflik diselesaikan per dokumen: last-write-wins berdasarkan updatedAt
+   (counter NIA memakai max seq — tidak pernah turun).
+   localStorage tetap cache utama; tanpa koneksi/cloud aplikasi tetap jalan.
+   ===================================================================== */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDhHOeHMPm5gBt2X7UUUVFaTI75ZYFNf08",
+  authDomain: "cricket-b4cfd.firebaseapp.com",
+  projectId: "cricket-b4cfd",
+  storageBucket: "cricket-b4cfd.firebasestorage.app",
+  messagingSenderId: "791336209186",
+  appId: "1:791336209186:web:2bc6e7e864c4f15256737b",
+  measurementId: "G-9RZWHQ0NN0"
+};
+
+const CLOUD_PUSH_DELAY = 800;      // debounce push setelah perubahan lokal
+const CLOUD_RETRY_DELAY = 5000;    // jeda coba ulang push setelah gagal
+const CLOUD_BATCH_MAX = 400;       // maks operasi per batch write
+
+let fbDb = null;
+let cloudReady = false;
+let cloudPushing = false;
+let applyingRemote = false;
+let cloudPushTimer = null;
+let cloudRetryTimer = null;
+let cloudStatus = 'off';
+let remoteIds = { matches:{}, athletes:{} };  // id doc yang diketahui dari snapshot cloud
+let pushedAt = { matches:{}, athletes:{}, settings:0, app:0, counter:null }; // nilai terakhir yang berhasil dikirim
+let cloudSeen = { matches:false, athletes:false, settings:false, app:false, counter:false };
+
+/* buang nilai undefined — Firestore menolak field undefined */
+function fbClean(v){
+  if(Array.isArray(v)) return v.map(fbClean);
+  if(v && typeof v==='object'){
+    const o = {};
+    for(const k in v){
+      if(!Object.prototype.hasOwnProperty.call(v,k)) continue;
+      if(v[k] === undefined) continue;
+      o[k] = fbClean(v[k]);
+    }
+    return o;
+  }
+  return v;
+}
+
+function setCloudStatus(st){
+  cloudStatus = st;
+  const el = $('#cloudPill');
+  if(!el) return;
+  const txt = {
+    off:        '☁️ Tanpa cloud',
+    connecting: '☁️ Menyambung…',
+    ok:         '☁️ Sinkron aktif',
+    offline:    '⚠️ Offline — simpan lokal',
+    error:      '☁️ Cloud gagal'
+  }[st] || '☁️';
+  const cls = { ok:'ok', connecting:'busy', offline:'warn', error:'err', off:'off' }[st] || 'off';
+  el.textContent = txt;
+  el.className = 'cloud-pill ' + cls;
+  el.title = {
+    off:        'Sinkron cloud tidak aktif (SDK Firebase tidak termuat / inisialisasi gagal). Data tetap tersimpan di browser.',
+    connecting: 'Menyambungkan ke Firestore…',
+    ok:         'Tersambung Firestore — perubahan disinkronkan otomatis antar perangkat.',
+    offline:    'Tidak ada koneksi internet — data aman di browser dan disinkron otomatis saat online kembali.',
+    error:      'Gagal tersambung ke Firestore. Cek koneksi internet dan aturan (Rules) Firestore di Firebase Console.'
+  }[st] || '';
+}
+
+function cloudEnabled(){ return cloudReady && !!fbDb; }
+
+function initCloud(){
+  try{
+    if(typeof firebase === 'undefined' || typeof firebase.initializeApp !== 'function'){
+      setCloudStatus('off');
+      return;
+    }
+    if(!firebase.apps || !firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+    fbDb = firebase.firestore();
+    try{ fbDb.enablePersistence({ synchronizeTabs:true }).catch(()=>{}); }catch(_){}
+    cloudReady = true;
+    setCloudStatus(navigator.onLine === false ? 'offline' : 'connecting');
+    listenCloudCollection('matches');
+    listenCloudCollection('athletes');
+    listenCloudDoc('settings');
+    listenCloudDoc('app');
+    listenCloudDoc('athleteCounter');
+  }catch(e){
+    console.warn('Cloud init gagal:', e);
+    cloudReady = false;
+    setCloudStatus('error');
+  }
+}
+
+function markCloudOk(){ setCloudStatus(navigator.onLine === false ? 'offline' : 'ok'); }
+
+/* ---------- PUSH : lokal -> cloud ---------- */
+function scheduleCloudPush(){
+  if(!cloudEnabled() || applyingRemote) return;
+  clearTimeout(cloudPushTimer);
+  cloudPushTimer = setTimeout(()=>{ cloudPushTimer = null; pushCloud(); }, CLOUD_PUSH_DELAY);
+}
+function flushCloudPush(){
+  if(!cloudEnabled()) return;
+  if(cloudPushTimer){ clearTimeout(cloudPushTimer); cloudPushTimer = null; }
+  pushCloud();
+}
+
+function commitCloudOps(ops){
+  const runs = [];
+  for(let i=0;i<ops.length;i+=CLOUD_BATCH_MAX){
+    const slice = ops.slice(i, i+CLOUD_BATCH_MAX);
+    runs.push(function(){
+      const b = fbDb.batch();
+      slice.forEach(op=>{ if(op.del) b.delete(op.ref); else b.set(op.ref, op.data); });
+      return b.commit();
+    });
+  }
+  return runs.reduce((p,fn)=> p.then(fn), Promise.resolve());
+}
+
+function pushCloud(){
+  if(!cloudEnabled() || applyingRemote || cloudPushing) return;
+  const now = Date.now();
+  const ops = [];
+  const newPushed = { matches:{}, athletes:{}, settings:null, app:null, counter:null };
+  const delKeys = [];   // pushedAt yang harus dibersihkan setelah delete sukses
+  let athletesDirty = false;
+
+  try{
+    /* ----- matches ----- */
+    if(cloudSeen.matches){
+      for(const id in DB.matches){
+        const m = DB.matches[id];
+        if((m.updatedAt||0) === pushedAt.matches[id]) continue;
+        const ts = Math.max(now, (m.updatedAt||0)+1);
+        m.updatedAt = ts;
+        matchSig[id] = JSON.stringify(m);
+        newPushed.matches[id] = ts;
+        ops.push({ ref: fbDb.collection('matches').doc(id), data: fbClean(m) });
+      }
+      /* match yang sudah dihapus lokal tapi masih ada di cloud
+         — hanya yang pernah kita kenal (ada di pushedAt) agar perangkat
+           baru/belum tersinkron tidak pernah menghapus data cloud */
+      for(const id in remoteIds.matches){
+        if(DB.matches[id]) continue;
+        if(pushedAt.matches[id] === undefined) continue;
+        ops.push({ ref: fbDb.collection('matches').doc(id), del:true });
+        delKeys.push({ map:'matches', id:id });
+      }
+    }
+
+    /* ----- athletes ----- */
+    if(cloudSeen.athletes){
+      const athletes = loadAthletes();
+      const localIds = {};
+      athletes.forEach(a=>{
+        if(!a || !a.id) return;
+        localIds[a.id] = 1;
+        if((a.updatedAt||0) === pushedAt.athletes[a.id]) return;
+        const ts = Math.max(now, (a.updatedAt||0)+1);
+        a.updatedAt = ts;
+        athletesDirty = true;
+        newPushed.athletes[a.id] = ts;
+        ops.push({ ref: fbDb.collection('athletes').doc(a.id), data: fbClean(a) });
+      });
+      for(const id in remoteIds.athletes){
+        if(localIds[id]) continue;
+        if(pushedAt.athletes[id] === undefined) continue;
+        ops.push({ ref: fbDb.collection('athletes').doc(id), del:true });
+        delKeys.push({ map:'athletes', id:id });
+      }
+      if(athletesDirty){ try{ localStorage.setItem(ATHLETES_KEY, JSON.stringify(athletes)); }catch(e){} }
+    }
+
+    /* ----- meta/settings ----- */
+    if(cloudSeen.settings){
+      const upd = DB.settingsUpdatedAt || 0;
+      if(upd !== pushedAt.settings){
+        const ts = Math.max(now, upd+1);
+        DB.settingsUpdatedAt = ts;
+        newPushed.settings = ts;
+        ops.push({ ref: fbDb.collection('meta').doc('settings'), data:{ data: fbClean(DB.settings), updatedAt: ts } });
+      }
+    }
+
+    /* ----- meta/app ----- */
+    if(cloudSeen.app){
+      const upd = DB.appUpdatedAt || 0;
+      if(upd !== pushedAt.app){
+        const ts = Math.max(now, upd+1);
+        DB.appUpdatedAt = ts;
+        newPushed.app = ts;
+        ops.push({ ref: fbDb.collection('meta').doc('app'), data:{ currentMatchId: DB.currentMatchId || null, updatedAt: ts } });
+      }
+    }
+
+    /* ----- meta/athleteCounter (max seq, tidak pernah turun) ----- */
+    if(cloudSeen.counter){
+      const seq = athleteSeqCount();
+      if(seq !== pushedAt.counter){
+        const data = { seq: seq, updatedAt: Math.max(now, Date.now()) };
+        newPushed.counter = seq;
+        ops.push({ ref: fbDb.collection('meta').doc('athleteCounter'), data: data });
+        try{ localStorage.setItem(ATHLETE_COUNTER_KEY, JSON.stringify(data)); }catch(e){}
+      }
+    }
+  }catch(e){
+    console.warn('pushCloud (build) gagal:', e);
+    setCloudStatus('error');
+    return;
+  }
+
+  if(!ops.length) return;
+
+  cloudPushing = true;
+  commitCloudOps(ops).then(()=>{
+    Object.assign(pushedAt.matches, newPushed.matches);
+    Object.assign(pushedAt.athletes, newPushed.athletes);
+    if(newPushed.settings != null) pushedAt.settings = newPushed.settings;
+    if(newPushed.app != null) pushedAt.app = newPushed.app;
+    if(newPushed.counter != null) pushedAt.counter = newPushed.counter;
+    delKeys.forEach(k=>{ delete pushedAt[k.map][k.id]; });
+    markCloudOk();
+  }).catch(err=>{
+    console.warn('pushCloud gagal:', err);
+    /* pushedAt tidak diubah -> otomatis dikirim ulang pada push berikutnya */
+    setCloudStatus(navigator.onLine === false ? 'offline' : 'error');
+    clearTimeout(cloudRetryTimer);
+    cloudRetryTimer = setTimeout(()=>{ cloudRetryTimer = null; pushCloud(); }, CLOUD_RETRY_DELAY);
+  }).then(()=>{ cloudPushing = false; });
+}
+
+/* ---------- PULL : cloud -> lokal ---------- */
+function listenCloudCollection(name){
+  fbDb.collection(name).onSnapshot(snap=>{
+    markCloudOk();
+    cloudSeen[name] = true;
+    const known = {}, removed = [];
+    snap.forEach(d=>{ known[d.id] = 1; });
+    snap.docChanges().forEach(ch=>{ if(ch.type==='removed') removed.push(ch.doc.id); });
+    remoteIds[name] = known;
+    if(name === 'matches') applyRemoteMatches(snap, removed);
+    else applyRemoteAthletes(snap, removed);
+  }, err=>{
+    console.warn('listener '+name+' error:', err);
+    setCloudStatus(navigator.onLine === false ? 'offline' : 'error');
+  });
+}
+
+function applyRemoteMatches(snap, removed){
+  let changed = false;
+  snap.forEach(doc=>{
+    const r = doc.data();
+    if(!r || !r.id) return;
+    const local = DB.matches[doc.id];
+    if(!local || (r.updatedAt||0) > (local.updatedAt||0)){
+      DB.matches[doc.id] = r;
+      pushedAt.matches[doc.id] = r.updatedAt || 0;
+      changed = true;
+    }
+  });
+  removed.forEach(id=>{
+    if(DB.matches[id]){
+      delete DB.matches[id];
+      delete pushedAt.matches[id];
+      if(DB.currentMatchId === id) DB.currentMatchId = Object.keys(DB.matches)[0] || null;
+      changed = true;
+    }
+  });
+  if(changed) applyRemoteCommit();
+}
+
+function applyRemoteAthletes(snap, removed){
+  let list;
+  try{ list = loadAthletes(); }catch(e){ list = []; }
+  const map = {};
+  list.forEach(a=>{ if(a && a.id) map[a.id] = a; });
+  let changed = false;
+  snap.forEach(doc=>{
+    const r = doc.data();
+    if(!r || !r.id) return;
+    const local = map[r.id];
+    if(!local || (r.updatedAt||0) > (local.updatedAt||0)){
+      map[r.id] = r;
+      pushedAt.athletes[r.id] = r.updatedAt || 0;
+      changed = true;
+    }
+  });
+  removed.forEach(id=>{
+    if(map[id]){ delete map[id]; delete pushedAt.athletes[id]; changed = true; }
+  });
+  if(!changed) return;
+  applyingRemote = true;
+  try{ saveAthletes(Object.keys(map).map(id=>map[id])); }
+  finally{ applyingRemote = false; }
+  if(CURRENT_VIEW === 'athletes'){ try{ renderAthletes(); }catch(e){} }
+}
+
+function listenCloudDoc(id){
+  fbDb.collection('meta').doc(id).onSnapshot(snap=>{
+    markCloudOk();
+    cloudSeen[id] = true;
+    if(!snap.exists) return;
+    const r = snap.data() || {};
+    if(id === 'settings') applyRemoteSettings(r);
+    else if(id === 'app') applyRemoteApp(r);
+    else if(id === 'athleteCounter') applyRemoteCounter(r);
+  }, err=>{
+    console.warn('listener meta/'+id+' error:', err);
+    setCloudStatus(navigator.onLine === false ? 'offline' : 'error');
+  });
+}
+
+function applyRemoteSettings(r){
+  if((r.updatedAt||0) <= (DB.settingsUpdatedAt||0)) return;
+  const data = r.data || {};
+  DB.settings = Object.assign(clone(DEFAULT_SETTINGS), data);
+  DB.settings.t20 = Object.assign(clone(DEFAULT_SETTINGS.t20), data.t20||{});
+  DB.settings.sixes = Object.assign(clone(DEFAULT_SETTINGS.sixes), data.sixes||{});
+  DB.settingsUpdatedAt = r.updatedAt || 0;
+  pushedAt.settings = r.updatedAt || 0;
+  applyRemoteCommit();
+}
+
+function applyRemoteApp(r){
+  if((r.updatedAt||0) <= (DB.appUpdatedAt||0)) return;
+  DB.currentMatchId = r.currentMatchId || null;
+  DB.appUpdatedAt = r.updatedAt || 0;
+  pushedAt.app = r.updatedAt || 0;
+  applyRemoteCommit();
+}
+
+function applyRemoteCounter(r){
+  const remoteSeq = +r.seq || 0;
+  const localSeq = athleteSeqCount();
+  if(remoteSeq > localSeq){
+    /* seq hanya boleh naik — tulis hasil max tanpa memicu push berantai */
+    try{ localStorage.setItem(ATHLETE_COUNTER_KEY, JSON.stringify({ seq: remoteSeq, updatedAt: r.updatedAt||0 })); }
+    catch(e){ console.warn('counter adopt', e); }
+  }
+  pushedAt.counter = remoteSeq;   // cloud berisi seq ini; lokal dikirim hanya bila berbeda
+}
+
+/* terapkan hasil sinkron ke tampilan — TANPA menstempel updatedAt baru
+   (refreshSyncSigs menandai data hasil adopsi sebagai baseline) */
+function applyRemoteCommit(){
+  applyingRemote = true;
+  try{
+    localStorage.setItem(STORE_KEY, JSON.stringify(DB));
+    refreshSyncSigs();
+  }catch(e){ console.warn('applyRemoteCommit', e); }
+  finally{ applyingRemote = false; }
+  try{
+    renderTopbar();
+    if(isLanding()){ renderLanding(); }
+    else{
+      /* view form (setup/settings/tutorial) tidak di-render ulang agar input pengguna tidak terganggu */
+      const safe = ['matches','scoring','scorebook','live','performa','athletes'];
+      if(safe.indexOf(CURRENT_VIEW) >= 0) renderView(CURRENT_VIEW);
+    }
+  }catch(e){ console.warn('render remote', e); }
+  scheduleCloudPush();   // dorong sisa perubahan lokal yang lebih baru (bila ada)
+}
+
+/* hapus semua match di cloud — untuk tombol "Hapus Semua Data" */
+function wipeCloudMatches(){
+  if(!cloudEnabled() || !cloudSeen.matches) return;
+  const ids = Object.keys(remoteIds.matches);
+  if(!ids.length){ pushedAt.matches = {}; return; }
+  const ops = ids.map(id=>({ ref: fbDb.collection('matches').doc(id), del:true }));
+  commitCloudOps(ops).then(()=>{
+    remoteIds.matches = {};
+    pushedAt.matches = {};
+    markCloudOk();
+  }).catch(err=>{ console.warn('wipeCloudMatches', err); setCloudStatus('error'); });
+}
+
+/* ---------- konektivitas / lifecycle ---------- */
+window.addEventListener('online', ()=>{
+  if(!cloudEnabled()){ setCloudStatus('off'); return; }
+  setCloudStatus('connecting');
+  clearTimeout(cloudRetryTimer); cloudRetryTimer = null;
+  pushCloud();
+});
+window.addEventListener('offline', ()=> setCloudStatus('offline'));
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState === 'hidden'){ try{ saveDB(); }catch(e){} flushCloudPush(); }
+});
+window.addEventListener('pagehide', ()=>{ try{ saveDB(); }catch(e){} flushCloudPush(); });
 
 /* =====================================================================
    PART 4 — ROUTER / SHELL  (+ rute landing page)
@@ -3309,6 +3831,39 @@ function renderLive(){
 /* =====================================================================
    PART 11 — SETTINGS
    ===================================================================== */
+/* Kompres logo agar doc settings di Firestore tetap jauh di bawah limit 1 MB.
+   PNG dipertahankan agar transparansi tidak hilang; bila hasilnya masih
+   besar, fallback ke JPEG dengan latar putih. */
+function optimizeLogo(dataUrl, byteSize){
+  return new Promise((resolve,reject)=>{
+    try{
+      if(byteSize && byteSize <= 250*1024) return resolve(dataUrl);
+      const img = new Image();
+      img.onerror = ()=> reject(new Error('logo tidak terbaca'));
+      img.onload = ()=>{
+        try{
+          const MAX = 800;
+          let w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+          if(!w || !h) return resolve(dataUrl);
+          if(Math.max(w,h) > MAX){ const s = MAX/Math.max(w,h); w = Math.round(w*s); h = Math.round(h*s); }
+          const c = document.createElement('canvas'); c.width = w; c.height = h;
+          const x = c.getContext('2d');
+          x.drawImage(img, 0, 0, w, h);
+          let url = c.toDataURL('image/png');
+          if(url.length > 600*1024){
+            x.globalCompositeOperation = 'destination-over';
+            x.fillStyle = '#ffffff';
+            x.fillRect(0,0,w,h);
+            url = c.toDataURL('image/jpeg', 0.85);
+          }
+          resolve(url.length < dataUrl.length ? url : dataUrl);
+        }catch(err){ reject(err); }
+      };
+      img.src = dataUrl;
+    }catch(e){ reject(e); }
+  });
+}
+
 function renderSettings(){
   const s = DB.settings;
   $('#view-settings').innerHTML = `
@@ -3363,7 +3918,7 @@ function renderSettings(){
         <button class="btn danger" id="s_reset">🗑 Hapus Semua Data</button>
         <input type="file" id="s_file" accept="application/json" style="display:none">
       </div>
-      <div class="hintbar" style="margin-top:12px">Data tersimpan otomatis di browser (localStorage) setiap bola. Ekspor JSON secara berkala sebagai cadangan — perubahan browser/hapus cache dapat menghapus data.</div>
+      <div class="hintbar" style="margin-top:12px">Data tersimpan otomatis di browser (localStorage) setiap bola dan disinkronkan realtime ke Firebase Cloud Firestore (<b>cricket-b4cfd</b>) selama aplikasi terbuka — lihat indikator ☁️ di header. Ekspor JSON tetap disarankan sebagai cadangan lokal.</div>
     </div>`;
 
   const num = (id, fn)=>{ const el=$(id); if(el) el.onchange = ()=>{ fn(Math.max(1,+el.value||1)); saveDB(); renderTopbar(); toast('Pengaturan tersimpan','ok'); }; };
@@ -3384,7 +3939,10 @@ function renderSettings(){
   $('#s_logo').onchange = e=>{
     const f = e.target.files[0]; if(!f) return;
     const r = new FileReader();
-    r.onload = ()=>{ DB.settings.logo = r.result; saveDB(); renderTopbar(); toast('Logo tersimpan','ok'); };
+    r.onload = ()=>{
+      const done = url=>{ DB.settings.logo = url; saveDB(); renderTopbar(); toast('Logo tersimpan','ok'); };
+      optimizeLogo(r.result, f.size).then(done).catch(()=> done(r.result));
+    };
     r.readAsDataURL(f);
   };
   $('#s_export').onclick = exportJSON;
@@ -3394,11 +3952,14 @@ function renderSettings(){
     window.open(location.href.split('#')[0]+'#live','_blank');
   };
   $('#s_reset').onclick = ()=>{
-    confirmDialog('Hapus Semua Data','SELURUH pertandingan dan pengaturan akan dihapus permanen dari browser ini. Ekspor backup dulu bila perlu.', ()=>{
+    confirmDialog('Hapus Semua Data','SELURUH pertandingan dan pengaturan akan dihapus permanen dari browser ini DAN dari cloud (Firestore). Ekspor backup dulu bila perlu.', ()=>{
       localStorage.removeItem(STORE_KEY);
       DB = { matches:{}, settings: clone(DEFAULT_SETTINGS), currentMatchId:null };
       undoStacks = {};
-      saveDB(); renderSettings(); renderTopbar(); toast('Semua data dihapus');
+      matchSig = {}; dbPayloadSig = null; settingsSig = ''; currentIdSig = null;
+      saveDB();
+      try{ wipeCloudMatches(); }catch(e){ console.warn('wipeCloud', e); }
+      renderSettings(); renderTopbar(); toast('Semua data dihapus');
     },'Hapus Permanen');
   };
 }
@@ -3651,6 +4212,41 @@ const CARD_RULES = [
 /* ---- NIA: format baru "Cricket - 0001" (tanpa tahun) ---- */
 const NIA_LABEL = 'Cricket';      // ubah di sini bila format NIA berubah
 const NIA_PAD   = 4;
+
+/* ---- Posisi Pemain (opsional) — ubah daftar pilihan hanya di sini ---- */
+const PLAYER_POSITIONS = ['Batsman','Bowler','All-rounder','Wicketkeeper'];
+const POSITION_EMPTY_LABEL = 'Pilih posisi (opsional)';
+
+/* ---- Jenis Kelamin (wajib) — ubah daftar pilihan hanya di sini ---- */
+const GENDER_OPTIONS    = ['Laki-laki', 'Perempuan'];
+const GENDER_EMPTY_LABEL = 'Pilih jenis kelamin';
+
+/* Normalisasi jenis kelamin saat impor: "L"/"P" -> penuh, kosong -> ''.
+   Nilai lain di luar daftar dipertahankan apa adanya (tidak hilang). */
+function normalizeGender(v){
+  const s = String(v==null?'':v).trim();
+  if(!s) return '';
+  const l = s.toLowerCase();
+  if(l==='l' || l==='laki-laki' || l==='laki laki') return GENDER_OPTIONS[0];
+  if(l==='p' || l==='perempuan' || l==='wanita') return GENDER_OPTIONS[1];
+  return s;
+}
+function genderValue(a){ return normalizeGender(a ? a.jenisKelamin : ''); }
+/* teks sel tabel/kartu: kosong -> tanda "-" */
+function genderText(g){
+  const s = normalizeGender(g);
+  return s ? esc(s) : '<span style="color:#94a3b8">-</span>';
+}
+
+/* opsi dropdown posisi; nilai non-standar (hasil impor file lama/luar)
+   tetap ditampilkan sebagai pilihan tambahan sementara agar tidak hilang */
+function positionOptionsHTML(sel){
+  const s = String(sel==null?'':sel).trim();
+  const opts = PLAYER_POSITIONS.slice();
+  if(s && opts.indexOf(s) < 0) opts.push(s);
+  return `<option value="">${esc(POSITION_EMPTY_LABEL)}</option>` +
+    opts.map(p=>`<option value="${esc(p)}"${p===s?' selected':''}>${esc(p)}</option>`).join('');
+}
 const BULAN_ID = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 
 function niaFormat(seq){ return NIA_LABEL + ' - ' + String(seq).padStart(NIA_PAD,'0'); }
@@ -3681,7 +4277,11 @@ function loadAthletes(){
   }catch(e){ return []; }
 }
 function saveAthletes(list){
-  try{ localStorage.setItem(ATHLETES_KEY, JSON.stringify(list)); return true; }
+  try{
+    localStorage.setItem(ATHLETES_KEY, JSON.stringify(list));
+    if(!applyingRemote) scheduleCloudPush();
+    return true;
+  }
   catch(e){
     toast('Gagal menyimpan data atlet (penyimpanan penuh?): ' + (e.message||e.name||''), 'err');
     return false;
@@ -3694,7 +4294,12 @@ function loadAthleteCounter(){
   }catch(e){ return {}; }
 }
 function saveAthleteCounter(c){
-  try{ localStorage.setItem(ATHLETE_COUNTER_KEY, JSON.stringify(c)); }
+  try{
+    c = (c && typeof c==='object') ? c : {};
+    c.updatedAt = Date.now();
+    localStorage.setItem(ATHLETE_COUNTER_KEY, JSON.stringify(c));
+    if(!applyingRemote) scheduleCloudPush();
+  }
   catch(e){ toast('Gagal menyimpan counter NIA','err'); }
 }
 /* Counter nomor urut TANPA reset tahun, tidak pernah diturunkan walau atlet dihapus.
@@ -3793,12 +4398,13 @@ function migrateAthleteNIAs(){
   return { changed, renumbered };
 }
 
-/* pencarian: nama, NIA lengkap, atau angka nomor urut (mis. "0002") */
+/* pencarian: nama, NIA lengkap, angka nomor urut (mis. "0002"), atau posisi */
 function athleteMatches(a, q){
   if(!q) return true;
   const nama = String(a.nama||'').toLowerCase();
   const nia  = String(a.nia||'').toLowerCase();
   if(nama.includes(q) || nia.includes(q)) return true;
+  if(String(a.posisi||'').toLowerCase().includes(q)) return true;
   if(/^\d+$/.test(q)){
     const seq = niaSeq(a.nia);
     return String(seq).padStart(NIA_PAD,'0').includes(q) || String(seq).includes(q);
@@ -3849,13 +4455,38 @@ function compressAthletePhoto(file){
   });
 }
 
+/* ---------- filter posisi (state bertahan antar render) ---------- */
+let ATLET_POSISI_FILTER = 'semua';
+const ATLET_POSISI_FILTERS = [{v:'semua', l:'Semua posisi'}]
+  .concat(PLAYER_POSITIONS.map(p=>({v:p, l:p})))
+  .concat([{v:'kosong', l:'Belum ditentukan'}]);
+function athletePassesPosisi(a, f){
+  if(!f || f==='semua') return true;
+  const p = String(a.posisi||'').trim();
+  if(f==='kosong') return !p;
+  return p === f;
+}
+function posisiFilterLabel(f){
+  const hit = ATLET_POSISI_FILTERS.find(o=>o.v===(f||ATLET_POSISI_FILTER));
+  return hit ? hit.l : 'Semua posisi';
+}
+function athletePosisiText(a){
+  const p = String(a.posisi||'').trim();
+  return p ? esc(p) : '<span style="color:#94a3b8">-</span>';
+}
+
 /* ---------- render halaman daftar ---------- */
 function renderAthletes(){
   migrateAthleteNIAs();
   const rawQ = ($('#at_search') && $('#at_search').value || '').toLowerCase();
   const q = rawQ.trim();
   const all = loadAthletes().slice().sort((a,b)=> (b.createdAt||0)-(a.createdAt||0));
-  const list = q ? all.filter(a=> athleteMatches(a, q)) : all;
+  let list = q ? all.filter(a=> athleteMatches(a, q)) : all;
+  if(ATLET_POSISI_FILTER !== 'semua') list = list.filter(a=> athletePassesPosisi(a, ATLET_POSISI_FILTER));
+  const filtering = !!q || ATLET_POSISI_FILTER !== 'semua';
+  const crit = [];
+  if(q) crit.push(`pencarian "<b>${esc(q)}</b>"`);
+  if(ATLET_POSISI_FILTER !== 'semua') crit.push(`filter posisi "<b>${esc(posisiFilterLabel())}</b>"`);
 
   $('#view-athletes').innerHTML = `
   <header class="at-topbar">
@@ -3879,8 +4510,11 @@ function renderAthletes(){
   <div class="card">
     <div class="at-toolbar">
       <input id="at_search" placeholder="🔍 Cari nama atau NIA..." value="${esc(q)}">
+      <select id="at_posfilter" aria-label="Filter posisi" title="Filter posisi pemain">
+        ${ATLET_POSISI_FILTERS.map(o=>`<option value="${esc(o.v)}"${o.v===ATLET_POSISI_FILTER?' selected':''}>${esc(o.l)}</option>`).join('')}
+      </select>
       <span class="chip live">${all.length} atlet</span>
-      ${q? `<span class="chip draft">${list.length} cocok</span>`:''}
+      ${filtering? `<span class="chip draft">${list.length} cocok</span>`:''}
     </div>
 
     ${all.length===0 ? `
@@ -3892,13 +4526,16 @@ function renderAthletes(){
         <button class="btn lg" id="at_new2">＋ Input Atlet Baru</button>
       </div>`
     : list.length===0 ? `
-      <div class="empty"><div class="big">🔍</div><p>Tidak ada atlet yang cocok dengan pencarian "<b>${esc(q)}</b>".</p></div>`
+      <div class="empty"><div class="big">🔍</div><p>Tidak ada atlet yang cocok dengan ${crit.join(' dan ') || 'filter'}.</p></div>`
     : `
+      <div class="at-tablewrap">
       <table class="lv-table">
         <thead><tr>
           <th style="width:58px">Foto</th>
           <th style="width:150px">NIA</th>
           <th>Nama Lengkap</th>
+          <th style="width:120px">Jenis Kelamin</th>
+          <th style="width:125px">Posisi</th>
           <th>Tempat, Tanggal Lahir</th>
           <th style="width:170px">Asal Kota/Kabupaten</th>
           <th style="width:230px">Aksi</th>
@@ -3909,6 +4546,8 @@ function renderAthletes(){
               <td>${ a.foto ? `<img class="at-thumb" src="${a.foto}" alt="">` : `<div class="at-thumb" style="display:flex;align-items:center;justify-content:center;color:#94a3b8">—</div>`}</td>
               <td><span class="at-nia">${esc(a.nia)}</span></td>
               <td><b>${esc(a.nama)}</b></td>
+              <td>${genderText(a.jenisKelamin)}</td>
+              <td>${athletePosisiText(a)}</td>
               <td>${esc(a.tempatLahir)}, ${esc(formatDateID(a.tanggalLahir))}</td>
               <td>${esc(a.asalKota)}</td>
               <td><div class="at-actions">
@@ -3918,7 +4557,8 @@ function renderAthletes(){
               </div></td>
             </tr>`).join('')}
         </tbody>
-      </table>`}
+      </table>
+      </div>`}
   </div>`;
 
   const openNew = ()=> openAthleteForm(null);
@@ -3929,6 +4569,7 @@ function renderAthletes(){
   $('#at_import').onclick = ()=> $('#at_file').click();
   $('#at_file').onchange = importAthletesJSON;
   const s = $('#at_search'); if(s){ s.oninput = ()=>{ const p=s.selectionStart; renderAthletes(); const n=$('#at_search'); if(n){ n.focus(); try{n.setSelectionRange(p,p);}catch(e){} } }; }
+  const pf = $('#at_posfilter'); if(pf){ pf.onchange = ()=>{ ATLET_POSISI_FILTER = pf.value; renderAthletes(); }; }
 
   $$('#view-athletes [data-act]').forEach(btn=>{
     btn.onclick = ()=>{
@@ -3973,10 +4614,27 @@ function openAthleteForm(editId){
         <input id="atf_tgl" type="date" value="${esc(existing?existing.tanggalLahir:'')}" max="${new Date().toISOString().slice(0,10)}">
         <div class="field-err" id="fe_tgl"></div>
       </div>
+      <div class="field" id="fw_jk">
+        <label>Jenis Kelamin *</label>
+        <div class="radio-row" id="atf_jk">
+          ${GENDER_OPTIONS.map(g=>`
+            <label class="radio"><input type="radio" name="atf_gender" value="${esc(g)}"${
+              genderValue(existing)===g ? ' checked' : ''
+            }><span>${esc(g)}</span></label>`).join('')}
+        </div>
+        <div class="field-err" id="fe_jk"></div>
+      </div>
+    </div>
+    <div class="form-row">
       <div class="field" id="fw_kota">
         <label>Asal Kota/Kabupaten *</label>
         <input id="atf_kota" value="${esc(existing?existing.asalKota:'')}" placeholder="mis. Sidoarjo">
         <div class="field-err" id="fe_kota"></div>
+      </div>
+      <div class="field" id="fw_posisi">
+        <label>Posisi Pemain <span class="opt-hint">(opsional)</span></label>
+        <select id="atf_posisi">${positionOptionsHTML(existing ? existing.posisi : '')}</select>
+        <div class="field-err" id="fe_posisi"></div>
       </div>
     </div>
     <div class="field" id="fw_foto">
@@ -4032,10 +4690,14 @@ function openAthleteForm(editId){
     const tempat = ($('#atf_tempat')||{}).value || '';
     const tgl = ($('#atf_tgl')||{}).value || '';
     const kota = ($('#atf_kota')||{}).value || '';
+    const posisi = String(($('#atf_posisi')||{}).value || '').trim();   // opsional — boleh kosong
+    const jkEl = document.querySelector('input[name="atf_gender"]:checked');
+    const jenisKelamin = jkEl ? jkEl.value : '';                       // wajib diisi
     let okAll = true;
 
     setErr('#fw_nama','#fe_nama',''); setErr('#fw_tempat','#fe_tempat','');
     setErr('#fw_tgl','#fe_tgl','');   setErr('#fw_kota','#fe_kota',''); setErr('#fw_foto','#fe_foto','');
+    setErr('#fw_jk','#fe_jk','');
 
     if(!nama.trim()){ setErr('#fw_nama','#fe_nama','Nama Lengkap wajib diisi'); okAll=false; }
     if(!tempat.trim()){ setErr('#fw_tempat','#fe_tempat','Tempat Lahir wajib diisi'); okAll=false; }
@@ -4043,6 +4705,7 @@ function openAthleteForm(editId){
     else if(tgl > new Date().toISOString().slice(0,10)){
       setErr('#fw_tgl','#fe_tgl','Tanggal Lahir tidak boleh tanggal masa depan'); okAll=false;
     }
+    if(!jenisKelamin){ setErr('#fw_jk','#fe_jk','Jenis Kelamin wajib dipilih'); okAll=false; }
     if(!kota.trim()){ setErr('#fw_kota','#fe_kota','Asal Kota/Kabupaten wajib diisi'); okAll=false; }
     if(!foto){ setErr('#fw_foto','#fe_foto','Foto wajib diunggah'); okAll=false; }
 
@@ -4060,14 +4723,14 @@ function openAthleteForm(editId){
         const i = list.findIndex(x=>x.id===existing.id);
         saved = Object.assign({}, existing, {
           nama:nama.trim(), tempatLahir:tempat.trim(), tanggalLahir:tgl,
-          asalKota:kota.trim(), foto, updatedAt: Date.now()
+          asalKota:kota.trim(), jenisKelamin, foto, posisi, updatedAt: Date.now()
         });
         if(i>=0) list[i] = saved; else list.push(saved);
       } else {
         saved = {
           id: uid(), nia: nextNIA(),
           nama:nama.trim(), tempatLahir:tempat.trim(), tanggalLahir:tgl,
-          asalKota:kota.trim(), foto,
+          asalKota:kota.trim(), jenisKelamin, foto, posisi,
           periode: String(new Date().getFullYear()),
           createdAt: Date.now()
         };
@@ -4091,7 +4754,28 @@ function openAthleteForm(editId){
 }
 
 /* ---------- kartu identitas atlet ---------- */
+/* placeholder foto: kotak berisi siluet orang + keterangan (bukan kotak kosong) */
+function photoPlaceholderHTML(){
+  return `<div class="photo-ph">
+    <svg viewBox="0 0 64 64" aria-hidden="true">
+      <circle cx="32" cy="23" r="12.5"></circle>
+      <path d="M10 60c0-12.2 9.8-22 22-22s22 9.8 22 22z"></path>
+    </svg>
+    <span>Belum ada foto</span>
+  </div>`;
+}
+/* foto gagal dimuat (data rusak) -> ganti placeholder, data asli tidak dihapus */
+function cardPhotoFailed(el){
+  const box = el && el.parentElement;
+  if(box) box.innerHTML = photoPlaceholderHTML();
+}
+function athleteCardPhotoHTML(a){
+  return a.foto
+    ? `<img src="${a.foto}" alt="Foto ${esc(a.nama)}" onerror="cardPhotoFailed(this)">`
+    : photoPlaceholderHTML();
+}
 function athleteCardHTML(a){
+  const jk = genderValue(a);
   return `
   <div class="idcard">
     <div class="idcard-head">
@@ -4099,21 +4783,73 @@ function athleteCardHTML(a){
       <div class="idcard-sub">${esc(CARD_SUBTITLE)}</div>
     </div>
     <div class="idcard-body">
-      <div class="idcard-photo">
-        ${ a.foto ? `<img src="${a.foto}" alt="foto atlet">` : `<div style="width:23mm;height:30.7mm;border-radius:1.4mm;background:#e2e8f0"></div>` }
-      </div>
+      <div class="idcard-photo">${athleteCardPhotoHTML(a)}</div>
       <div class="idcard-info">
         <div class="idcard-nia">
           <span>NOMOR INDUK ATLET</span>
           <b>${esc(a.nia)}</b>
         </div>
-        <div class="idcard-row"><label>Nama Lengkap</label><div>${esc(a.nama)}</div></div>
-        <div class="idcard-row"><label>Tempat / Tgl Lahir</label><div>${esc(a.tempatLahir)}, ${esc(formatDateID(a.tanggalLahir))}</div></div>
-        <div class="idcard-row"><label>Asal Kota/Kab.</label><div>${esc(a.asalKota)}</div></div>
+        <div class="idc-field"><label>Nama Lengkap</label><div class="idc-val">${esc(a.nama)}</div></div>
+        <div class="idc-field"><label>Tempat / Tgl Lahir</label><div class="idc-val">${esc(a.tempatLahir)}, ${esc(formatDateID(a.tanggalLahir))}</div></div>
+        <div class="idc-duo">
+          <div class="idc-field"><label>Jenis Kelamin</label><div class="idc-val">${jk ? esc(jk) : '-'}</div></div>
+          <div class="idc-field"><label>Asal Kota/Kab.</label><div class="idc-val">${esc(a.asalKota)}</div></div>
+        </div>
       </div>
     </div>
     <div class="idcard-periode">Periode ${esc(String(a.periode||''))}</div>
   </div>`;
+}
+/* Pastikan isi kolom kanan tidak keluar kartu: perkecil ukuran bertahap sampai
+   batas minimum yang masih terbaca (isi 7pt, label 6pt pada ukuran cetak), lalu
+   biarkan teks wrap. Tidak pernah memotong dengan elipsis. */
+function fitCardInfo(scope){
+  const root = (scope && scope.classList && scope.classList.contains('idcard'))
+    ? scope
+    : (scope && scope.querySelector ? scope.querySelector('.idcard') : null);
+  if(!root) return true;
+  const info = root.querySelector('.idcard-info');
+  const first = info && info.firstElementChild, last = info && info.lastElementChild;
+  if(!info || !first || !last) return true;
+  /* elemen tersembunyi (mis. #print-root) di luar layar sementara agar bisa diukur */
+  let host = null, prevCss = '';
+  if(!root.getClientRects().length){
+    host = root.closest('#print-root') || root.parentElement;
+    if(host){ prevCss = host.style.cssText;
+      host.style.cssText = prevCss + ';display:block!important;position:fixed;left:-20000px;top:0;visibility:hidden;'; }
+  }
+  try{
+    const fits = ()=>{
+      const box = info.getBoundingClientRect();
+      const a = first.getBoundingClientRect(), b = last.getBoundingClientRect();
+      if(a.top < box.top - 1 || b.bottom > box.bottom + 1) return false;
+      for(const k of info.children){                 /* juga pastikan tidak melebar ke luar */
+        const kb = k.getBoundingClientRect();
+        if(kb.left < box.left - 1 || kb.right > box.right + 1) return false;
+      }
+      return true;
+    };
+    /* [ukuran isi, ukuran label, jarak antar field, lebar foto, tinggi foto]
+       Batas bawah huruf = 7pt isi / 6pt label pada ukuran cetak.
+       Bila data sangat panjang sampai tetap tidak muat, yang dikurangi adalah
+       kotak foto (rasio 3:4 dipertahankan) — huruf tidak pernah di bawah batas. */
+    const steps = [
+      [27,22,10,230,307],[26,22,10,230,307],[25,22,10,230,307],
+      [25,22,6,230,307], [25,21.2,6,230,307],
+      [25,21.2,6,215,287],[25,21.2,6,200,267]
+    ];
+    for(const [v,l,g,pw,ph] of steps){
+      root.style.setProperty('--val-units', v);
+      root.style.setProperty('--lbl-units', l);
+      root.style.setProperty('--gap-units', g);
+      root.style.setProperty('--photo-w', pw);
+      root.style.setProperty('--photo-h', ph);
+      if(fits()) return true;
+    }
+    return fits();
+  } finally {
+    if(host) host.style.cssText = prevCss;
+  }
 }
 function athleteCardBackHTML(){
   return `
@@ -4146,13 +4882,17 @@ function openAthleteCard(id, highlight){
     {label:'🖨️ Cetak / PDF', cls:'secondary', fn:()=> printAthleteCard(a)},
     {label:'⬇️ PNG Depan', cls:'', fn:()=> downloadAthletePNG(a,'front')},
     {label:'⬇️ PNG Belakang', cls:'secondary', fn:()=> downloadAthletePNG(a,'back')}
-  ]);
+  ], {wide:true});
+  fitCardInfo($('#cardStage'));
   $$('#cardSide button').forEach(b=>{
     b.onclick = ()=>{
       $$('#cardSide button').forEach(x=>x.classList.remove('active'));
       b.classList.add('active');
       const st = $('#cardStage');
-      if(st) st.innerHTML = (b.dataset.side==='back') ? athleteCardBackHTML() : athleteCardHTML(a);
+      if(st){
+        st.innerHTML = (b.dataset.side==='back') ? athleteCardBackHTML() : athleteCardHTML(a);
+        fitCardInfo(st);
+      }
     };
   });
 }
@@ -4163,6 +4903,7 @@ function printAthleteCard(a){
   $('#print-root').innerHTML =
     `<div class="idcard-page">${athleteCardHTML(a)}</div>` +
     `<div class="idcard-page">${athleteCardBackHTML()}</div>`;
+  fitCardInfo($('#print-root'));
   setTimeout(()=>{ window.print(); }, 60);
 }
 
@@ -4179,24 +4920,46 @@ function roundRectPath(ctx,x,y,w,h,r){
   ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
   ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
 }
-function fitFont(ctx, text, maxW, size, weight){
+/* perkecil ukuran huruf sampai muat; font ctx selalu diset ke ukuran hasil */
+function fitFont(ctx, text, maxW, size, weight, min){
+  const mn = (typeof min==='number') ? min : 8;
   let s = size;
-  while(s > 8){
+  for(;;){
     ctx.font = (weight||'700') + ' ' + s + 'px "Segoe UI", Arial, sans-serif';
-    if(ctx.measureText(text).width <= maxW) break;
+    if(ctx.measureText(text).width <= maxW || s <= mn) return s;
     s -= 1;
   }
-  return s;
+}
+/* kecilkan ke batas minimum; bila tetap tidak muat -> wrap (tanpa pemotongan) */
+function fitOrWrap(ctx, text, maxW, size, min, weight){
+  let s = size;
+  for(;;){
+    ctx.font = weight + ' ' + s + 'px "Segoe UI", Arial, sans-serif';
+    if(ctx.measureText(text).width <= maxW) return { size:s, lines:[String(text)] };
+    if(s <= min) return { size:s, lines:wrapText(ctx, String(text), maxW) };
+    s -= 1;
+  }
 }
 function wrapText(ctx, text, maxW){
   const words = String(text).split(/\s+/).filter(Boolean);
   const lines = []; let cur = '';
+  const flush = ()=>{ if(cur){ lines.push(cur); cur = ''; } };
   words.forEach(w=>{
+    if(ctx.measureText(w).width > maxW){        // satu kata terlalu lebar -> pecah per huruf
+      flush();
+      let chunk = '';
+      for(const ch of w){
+        if(chunk && ctx.measureText(chunk+ch).width > maxW){ lines.push(chunk); chunk = ch; }
+        else chunk += ch;
+      }
+      cur = chunk;
+      return;
+    }
     const t = cur ? cur+' '+w : w;
     if(!cur || ctx.measureText(t).width <= maxW) cur = t;
     else { lines.push(cur); cur = w; }
   });
-  if(cur) lines.push(cur);
+  flush();
   return lines;
 }
 function saveCanvasPNG(c, a, suffix){
@@ -4212,20 +4975,24 @@ function saveCanvasPNG(c, a, suffix){
     toast('Kartu PNG diunduh (' + (suffix.replace('-','')||'depan') + ')','ok');
   }, 'image/png');
 }
-function drawCardChromeHeader(x, W, title, sub){
+/* header kartu versi PNG — ukuran mengikuti satuan kartu (1 satuan = 1/856 lebar) */
+function drawCardChromeHeader(x, W, title, sub, U){
+  const u = (typeof U==='number' && U) || (W/856);
+  const headH = Math.round(u*90);
   const g = x.createLinearGradient(0,0,W,0);
   g.addColorStop(0,'#115e59'); g.addColorStop(.65,'#0f766e'); g.addColorStop(1,'#134e4a');
-  x.fillStyle = g; x.fillRect(0,0,W,102);
-  x.textBaseline = 'alphabetic';
+  x.fillStyle = g; x.fillRect(0,0,W,headH);
+  x.textBaseline = 'alphabetic'; x.textAlign = 'left';
   x.fillStyle = '#ffffff';
-  const ts = fitFont(x, title, W-60, 36, '800');
+  const ts = fitFont(x, title, W-u*60, u*31, '800', u*24);
   x.font = '800 ' + ts + 'px "Segoe UI", Arial, sans-serif';
-  x.fillText(title, 30, 46);
+  x.fillText(title, u*30, u*46);
   if(sub){
-    const ss = fitFont(x, sub, W-60, 22, '600');
+    const ss = fitFont(x, sub, W-u*60, u*22, '600', u*16);
     x.font = '600 ' + ss + 'px "Segoe UI", Arial, sans-serif';
-    x.globalAlpha = .95; x.fillText(sub, 30, 80); x.globalAlpha = 1;
+    x.globalAlpha = .97; x.fillText(sub, u*30, u*78); x.globalAlpha = 1;
   }
+  return headH;
 }
 
 function downloadAthletePNG(a, side){
@@ -4237,75 +5004,140 @@ function downloadAthletePNG(a, side){
 }
 
 /* ---------- sisi depan ---------- */
+/* placeholder foto versi PNG (kanvas tidak bisa memakai SVG DOM) */
+function drawPhotoPlaceholderPNG(x, bx, by, bw, bh){
+  x.save();
+  roundRectPath(x, bx, by, bw, bh, bw*0.06); x.clip();
+  x.fillStyle = '#e6edf3'; x.fillRect(bx,by,bw,bh);
+  const cx = bx + bw/2;
+  x.fillStyle = '#9aa8b7';
+  x.beginPath(); x.arc(cx, by + bh*0.33, bw*0.17, 0, Math.PI*2); x.fill();
+  const sw = bw*0.56, bbot = by + bh*0.76, sh = bh*0.26;
+  x.beginPath();
+  x.moveTo(cx-sw/2, bbot);
+  x.bezierCurveTo(cx-sw/2, bbot-sh, cx-sw*0.2, bbot-sh*1.04, cx, bbot-sh*1.04);
+  x.bezierCurveTo(cx+sw*0.2, bbot-sh*1.04, cx+sw/2, bbot-sh, cx+sw/2, bbot);
+  x.closePath(); x.fill();
+  x.fillStyle = '#475569'; x.textAlign = 'center';
+  const t = 'Belum ada foto';
+  const ts = fitFont(x, t, bw-16, 26, '800', 20);
+  x.font = '800 ' + ts + 'px "Segoe UI", Arial, sans-serif';
+  x.fillText(t, cx, by + bh - 16);
+  x.restore();
+  x.textAlign = 'left';
+}
+
 function drawCardFrontPNG(c, x, W, H, a){
   x.fillStyle = '#ffffff'; x.fillRect(0,0,W,H);
-  drawCardChromeHeader(x, W, 'KARTU IDENTITAS ATLET', CARD_SUBTITLE);
+  const u = W/856;                                  // 1 satuan kartu (0,1 mm di cetak)
+  const p = n => n*u;
+  const headH = drawCardChromeHeader(x, W, 'KARTU IDENTITAS ATLET', CARD_SUBTITLE, u);
 
-  // foto 3:4
-  const px=30, py=128, pw=283, ph=377;
-  x.fillStyle = '#e2e8f0'; x.fillRect(px,py,pw,ph);
+  const ribH = p(46.6), ribY = H - ribH;
+  const cTop = headH + p(20), cBot = ribY - p(20);
+  const cLeft = p(30), cRight = W - p(30);
+
+  const fx = cLeft, fy = cTop;                                // posisi kotak foto (sama dgn CSS)
+  const ih = cBot - cTop;
+  const lblM = p(3), colGap = p(16);
+
+  const gender = genderValue(a) || '-';
+  const ttl = String(a.tempatLahir||'') + ', ' + formatDateID(a.tanggalLahir);
+  const lh = s => s*1.16;
+
+  /* hitung tata letak untuk satu konfigurasi ukuran huruf + lebar foto */
+  const measure = (valF, lblF, gap, pw)=>{
+    const fw = p(pw), fh = p(pw*307/230);                     // rasio 3:4 dipertahankan
+    const ix = fx + fw + p(30), iw = cRight - ix;
+    const colW = (iw - colGap)/2;
+    const namaF = fitOrWrap(x, String(a.nama||''), iw, valF, 30, '800');
+    const ttlF  = fitOrWrap(x, ttl, iw, valF, 30, '800');
+    const jkF   = fitOrWrap(x, gender, colW, valF, 30, '800');
+    const kotaF = fitOrWrap(x, String(a.asalKota||''), colW, valF, 30, '800');
+    const fH = F => lblF*1.2 + lblM + F.lines.length*lh(F.size);
+    const niaVal = fitFont(x, String(a.nia||''), iw - p(32) - p(8), 41, '800', 34);
+    const niaH = p(16) + lblF*1.2 + niaVal*1.12 + p(7);
+    const total = niaH + gap + fH(namaF) + gap + fH(ttlF) + gap + Math.max(fH(jkF), fH(kotaF));
+    return { namaF, ttlF, jkF, kotaF, niaVal, niaH, lblF, gap, total, fw, fh, ix, iw };
+  };
+
+  /* konfigurasi = sama dgn langkah fitCardInfo (batas bawah: isi 7pt, label 6pt;
+     bila masih belum muat, kotak foto yang dikecilkan) */
+  const CFG = [[32,26,12,230],[30,26,12,230],[30,26,7,230],[30,25,7,230],[30,25,7,215],[30,25,7,200]];
+  let m = null;
+  for(const [v,l,g,pw] of CFG){
+    m = measure(v,l,g,pw);
+    if(m.total <= ih) break;
+  }
+
+  const drawField = (X, label, F, top)=>{
+    const lblF = m.lblF;
+    x.textAlign = 'left';
+    x.fillStyle = '#134e4a';
+    x.font = '800 ' + lblF + 'px "Segoe UI", Arial, sans-serif';
+    x.fillText(String(label).toUpperCase(), X, top + lblF*0.95);
+    const vy = top + lblF*1.2 + lblM;
+    x.fillStyle = '#0b1220';
+    x.font = '800 ' + F.size + 'px "Segoe UI", Arial, sans-serif';
+    F.lines.forEach((ln,i)=> x.fillText(ln, X, vy + F.size*0.95 + i*lh(F.size)));
+    return lblF*1.2 + lblM + F.lines.length*lh(F.size);
+  };
 
   const drawInfo = ()=>{
-    x.strokeStyle = '#0f766e'; x.lineWidth = 5;
-    roundRectPath(x,px,py,pw,ph,12); x.stroke();
+    let y = cTop + Math.max(0, (ih - m.total)/2);
 
-    // kotak NIA
-    const nx=346, ny=128, nw=W-nx-30, nh=104;
-    x.fillStyle = '#ecfdf5'; roundRectPath(x,nx,ny,nw,nh,10); x.fill();
-    x.strokeStyle = '#99f6e4'; x.lineWidth = 3; roundRectPath(x,nx,ny,nw,nh,10); x.stroke();
-    x.fillStyle = '#0f766e';
-    x.font = '700 21px "Segoe UI", Arial, sans-serif';
-    x.fillText('NOMOR INDUK ATLET', nx+18, ny+36);
+    /* kotak NIA (tetap menonjol) */
+    x.fillStyle = '#ecfdf5'; roundRectPath(x, m.ix, y, m.iw, m.niaH, p(11)); x.fill();
+    x.strokeStyle = '#99f6e4'; x.lineWidth = p(3.5); roundRectPath(x, m.ix, y, m.iw, m.niaH, p(11)); x.stroke();
+    x.textAlign = 'left';
+    x.fillStyle = '#134e4a';
+    x.font = '800 ' + m.lblF + 'px "Segoe UI", Arial, sans-serif';
+    x.fillText('NOMOR INDUK ATLET', m.ix + p(16), y + p(8) + m.lblF*0.95);
     x.fillStyle = '#115e59';
-    const niaSize = fitFont(x, a.nia, nw-36, 50, '800');
-    x.font = '800 ' + niaSize + 'px "Segoe UI", Arial, sans-serif';
-    x.fillText(a.nia, nx+18, ny+86);
+    x.font = '800 ' + m.niaVal + 'px "Segoe UI", Arial, sans-serif';
+    x.fillText(String(a.nia||''), m.ix + p(16), y + p(8) + m.lblF*1.2 + m.niaVal*0.9);
+    y += m.niaH + m.gap;
 
-    // baris data
-    const rows = [
-      ['NAMA LENGKAP', a.nama],
-      ['TEMPAT, TGL LAHIR', a.tempatLahir + ', ' + formatDateID(a.tanggalLahir)],
-      ['ASAL KOTA/KABUPATEN', a.asalKota]
-    ];
-    let ry = 282;
-    rows.forEach(([lbl,val])=>{
-      x.fillStyle = '#64748b';
-      x.font = '700 20px "Segoe UI", Arial, sans-serif';
-      x.fillText(lbl, nx, ry);
-      x.fillStyle = '#0f172a';
-      const vs = fitFont(x, val, nw-36, 32, '700');
-      x.font = '700 ' + vs + 'px "Segoe UI", Arial, sans-serif';
-      x.fillText(val, nx, ry+42);
-      ry += 90;
-    });
+    y += drawField(m.ix, 'Nama Lengkap', m.namaF, y) + m.gap;
+    y += drawField(m.ix, 'Tempat / Tgl Lahir', m.ttlF, y) + m.gap;
 
-    // pita Periode di bagian bawah kartu
-    const by = 528, bh = 58;
-    x.fillStyle = '#ccfbf1'; roundRectPath(x, 30, by, W-60, bh, 12); x.fill();
-    x.strokeStyle = '#5eead4'; x.lineWidth = 3; roundRectPath(x, 30, by, W-60, bh, 12); x.stroke();
-    x.fillStyle = '#0f766e';
-    x.textAlign = 'center';
-    const periodeText = 'Periode ' + (a.periode || periodeOf(a));
-    const ps = fitFont(x, periodeText, W-120, 32, '800');
+    const colW = (m.iw - colGap)/2;
+    const h1 = drawField(m.ix, 'Jenis Kelamin', m.jkF, y);
+    const h2 = drawField(m.ix + colW + colGap, 'Asal Kota/Kab.', m.kotaF, y);
+    y += Math.max(h1, h2);
+
+    /* pita periode (sama dgn CSS) */
+    x.fillStyle = '#0f766e'; x.fillRect(0, ribY, W, ribH);
+    x.fillStyle = '#ffffff'; x.textAlign = 'center';
+    const periodeText = String('Periode ' + (a.periode || periodeOf(a))).toUpperCase();
+    const ps = fitFont(x, periodeText, W - p(80), p(24), '800', p(18));
     x.font = '800 ' + ps + 'px "Segoe UI", Arial, sans-serif';
-    x.fillText(periodeText, W/2, by + 39);
+    x.fillText(periodeText, W/2, ribY + ribH/2 + ps*0.35);
     x.textAlign = 'left';
 
     saveCanvasPNG(c, a, '-depan');
   };
 
-  if(a.foto){
-    const img = new Image();
-    img.onload = ()=>{
-      x.save(); roundRectPath(x,px,py,pw,ph,12); x.clip();
-      drawImageCover(x, img, px, py, pw, ph);
+  /* foto (bila tidak ada / gagal dimuat -> placeholder, bukan kotak kosong) */
+  const drawPhoto = (img)=>{
+    if(img){
+      x.save(); roundRectPath(x, fx, fy, m.fw, m.fh, p(14)); x.clip();
+      drawImageCover(x, img, fx, fy, m.fw, m.fh);
       x.restore();
-      drawInfo();
-    };
-    img.onerror = ()=>{ drawInfo(); };
-    img.src = a.foto;
-  } else {
+    } else {
+      drawPhotoPlaceholderPNG(x, fx, fy, m.fw, m.fh);
+    }
+    x.strokeStyle = '#0f766e'; x.lineWidth = p(4.5);
+    roundRectPath(x, fx, fy, m.fw, m.fh, p(14)); x.stroke();
     drawInfo();
+  };
+  if(a.foto){
+    const im = new Image();
+    im.onload = ()=> drawPhoto(im);
+    im.onerror = ()=> drawPhoto(null);
+    im.src = a.foto;
+  } else {
+    drawPhoto(null);
   }
 }
 
@@ -4414,9 +5246,11 @@ function importAthletesJSON(e){
         id: (raw.id && !existingIDs.has(raw.id)) ? raw.id : uid(),
         nia: target,
         nama: String(raw.nama||''),
+        jenisKelamin: normalizeGender(raw.jenisKelamin),   // file lama -> '' ; "L"/"P" -> penuh
         tempatLahir: String(raw.tempatLahir||''),
         tanggalLahir: String(raw.tanggalLahir||''),
         asalKota: String(raw.asalKota||''),
+        posisi: String(raw.posisi==null ? '' : raw.posisi),   // file lama tanpa posisi -> '' ; nilai di luar daftar tetap dipertahankan
         foto: String(raw.foto||''),
         periode: String(raw.periode || periodeOf({ createdAt, nia: raw.nia })),
         createdAt
@@ -5079,6 +5913,7 @@ document.addEventListener('keydown', e=>{
 function init(){
   loadDB();
   initChannel();
+  try{ initCloud(); }catch(e){ console.warn('initCloud', e); }
   if(!DB.currentMatchId){
     const ids = Object.keys(DB.matches);
     if(ids.length) DB.currentMatchId = ids.sort((a,b)=> (DB.matches[b].createdAt||0)-(DB.matches[a].createdAt||0))[0];
