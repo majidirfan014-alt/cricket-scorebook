@@ -547,6 +547,51 @@ body.route-athletes #main{display:none !important}
 .pill-tabs button.active{background:var(--accent);border-color:var(--accent);color:#fff}
 
 /* ============================================================
+   MATCH SETUP — SKUAD & SUSUNAN MAIN
+   ============================================================ */
+.sq-teams{display:flex;flex-direction:column;gap:14px}
+.sq-actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.sq-tools{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.sq-tools input{padding:8px 11px;border:1.5px solid var(--line);border-radius:9px;min-width:160px;flex:1;max-width:280px}
+.sq-tools input:focus{outline:2px solid #5eead4;border-color:var(--accent)}
+.sq-table{min-width:620px}
+.sq-table td,.sq-table th{vertical-align:middle}
+.sq-table td.ctr,.sq-table th.ctr{text-align:center}
+.sq-no{font-family:Consolas,monospace;font-weight:800;color:#0f766e;white-space:nowrap}
+.sq-warn{color:#b45309;font-weight:800;cursor:help}
+.sq-main{width:18px;height:18px;accent-color:#0f766e;cursor:pointer;margin:0}
+.sq-main:disabled{cursor:not-allowed;opacity:.45}
+.sq-lineup{margin-top:12px;border:1.5px solid var(--line);border-radius:11px;background:#f8fafc;padding:10px 12px}
+.sq-lp-head{display:flex;align-items:center;gap:9px;flex-wrap:wrap;font-size:13px;font-weight:750;margin-bottom:8px}
+.sq-ord{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.sq-ord li{
+  display:flex;align-items:center;gap:9px;background:#fff;border:1px solid var(--line);
+  border-radius:9px;padding:6px 9px
+}
+.sq-pos{
+  width:24px;height:24px;flex:none;border-radius:50%;background:var(--accent);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800
+}
+.sq-nm{flex:1;min-width:0;font-weight:700;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sq-nm i{font-style:normal;color:var(--muted);font-weight:650;font-size:12px;font-family:Consolas,monospace}
+.sq-tag{font-size:10px;background:#e0e7ff;color:#3730a1;border-radius:5px;padding:1px 5px;vertical-align:middle}
+.sq-acts{display:flex;gap:5px;flex:none}
+.bk-prev{max-height:300px;overflow:auto;border:1px solid var(--line);border-radius:10px;background:#fff}
+.bk-prev .lv-table{min-width:520px}
+.bk-prev tr.bad td{background:#fef2f2}
+.bk-prev tr.bad input{border-color:#dc2626;background:#fff}
+.bk-prev input{padding:7px 9px;border:1.5px solid var(--line);border-radius:8px;width:100%}
+.bk-prev input:focus{outline:2px solid #5eead4;border-color:var(--accent)}
+.bk-reason{font-size:11.5px;font-weight:700;color:#b91c1c}
+.bk-warn{color:#b45309;font-weight:700}
+@media(max-width:640px){
+  .sq-actions .btn{flex:1 1 auto}
+  .sq-tools input{max-width:none;min-width:100%}
+  .sq-ord li{flex-wrap:wrap}
+}
+.iconbtn:disabled{opacity:.35;cursor:not-allowed}
+
+/* ============================================================
    LANDING PAGE  (halaman awal — tanpa login)
    ============================================================ */
 #landing{display:none;min-height:100vh;flex-direction:column;background:#f1f5f9}
@@ -870,6 +915,8 @@ function loadDB(){
       DB.settings = Object.assign(clone(DEFAULT_SETTINGS), parsed.settings||{});
       DB.settings.t20 = Object.assign(clone(DEFAULT_SETTINGS.t20), (parsed.settings||{}).t20||{});
       DB.settings.sixes = Object.assign(clone(DEFAULT_SETTINGS.sixes), (parsed.settings||{}).sixes||{});
+      /* skuad (fitur Match Setup) — data lama tanpa `skuad` diisi dari susunan main */
+      for(const id in DB.matches){ try{ normalizeSquads(DB.matches[id]); }catch(e){ console.warn('normalizeSquads', e); } }
     }
   }catch(e){ console.warn('loadDB',e); }
   refreshSyncSigs();
@@ -911,10 +958,6 @@ function newMatch(format){
   const id = uid();
   const fmt = format==='SIXES' ? 'SIXES' : 'T20';
   const def = FORMAT_DEFAULTS[fmt];
-  const mkPlayers = n => Array.from({length:n},(_,i)=>({
-    id:uid(), name:'', shirtNo:'', isWK:false, isBowler:false, isCaptain:false
-  }));
-  const n = def.playersPerTeam;
   return {
     id, format:fmt, status:'draft',
     championship: DB.settings.championship,
@@ -932,8 +975,8 @@ function newMatch(format){
       maxWickets: def.maxWickets
     },
     teams:{
-      A:{ name:'', players: mkPlayers(n) },
-      B:{ name:'', players: mkPlayers(n) }
+      A:{ name:'', players:[], squad:[] },
+      B:{ name:'', players:[], squad:[] }
     },
     innings:[
       { batting:'A', bowling:'B', status:'pending', events:[], opening:null },
@@ -966,9 +1009,18 @@ function maxWicketsOf(match){ return rulesOf(match).maxWickets; }
 function teamName(match, key){ return (match.teams[key] && match.teams[key].name) || (key==='A'?'Tim A':'Tim B'); }
 function playersOf(match, key){ return (match.teams[key] && match.teams[key].players) || []; }
 function findPlayer(match, id){
+  if(id==null || id==='') return null;
   for(const k of ['A','B']){
     const p = playersOf(match,k).find(x=>x.id===id);
     if(p) return p;
+  }
+  /* cadangan: atlet skuad yang tidak (lagi) berada di susunan main */
+  for(const k of ['A','B']){
+    const t = match && match.teams && match.teams[k];
+    if(t && Array.isArray(t.squad)){
+      const p = t.squad.find(x=>x.id===id);
+      if(p) return p;
+    }
   }
   return null;
 }
@@ -986,6 +1038,141 @@ function playerRoleLabel(p){
 }
 function battingPlayers(match, inning){ return playersOf(match, inning.batting); }
 function bowlingPlayers(match, inning){ return playersOf(match, inning.bowling); }
+
+/* =====================================================================
+   SKUAD & SUSUNAN MAIN (Match Setup)
+   skuad        = semua atlet milik satu tim di pertandingan ini
+                  -> m.teams[k].squad   (baru, boleh lebih dari pemain main)
+   susunan main = atlet terpilih + urutan batting
+                  -> m.teams[k].players (TIDAK BERUBAH: sumber tunggal
+                     Scoring Pad, Scorebook, Live View, Performa Atlet)
+   Kompatibel mundur: pertandingan lama belum punya `squad` -> diisi dari
+   susunan main (baris kosong dibuang), urutan & isi identik, hasil hitung sama.
+   ===================================================================== */
+const SQUAD_MAX = 30;                     // batas maksimum skuad per tim
+const LINEUP_MAX = { T20:11, SIXES:6 };   // batas susunan main per format
+function lineupMaxOf(match){ return (match && match.format==='SIXES') ? LINEUP_MAX.SIXES : LINEUP_MAX.T20; }
+function isNamedPlayer(p){
+  return !!(p && typeof p==='object' && p.id && String(p.name==null?'':p.name).trim());
+}
+/* susunan main sudah memakai objek yang sama dengan skuad? (setelah load JSON
+   keduanya jadi objek terpisah -> perlu ditautkan ulang) */
+function squadSynced(t){
+  if(!t) return false;
+  if(!Array.isArray(t.players) || !Array.isArray(t.squad)) return false;
+  if(t.squad.some(p=> !isNamedPlayer(p))) return false;
+  return t.players.every(p=> isNamedPlayer(p) && t.squad.indexOf(p)>=0);
+}
+function normalizeSquads(match){
+  if(!match || !match.teams) return;
+  ['A','B'].forEach(key=>{
+    const t = match.teams[key]; if(!t) return;
+    if(!Array.isArray(t.players)) t.players = [];
+    const squad = [], byId = {};
+    const take = p=>{ if(isNamedPlayer(p) && !byId[p.id]){ byId[p.id]=p; squad.push(p); } };
+    (Array.isArray(t.squad) ? t.squad : []).forEach(take);
+    t.players.forEach(take);                       // pemain lama yang belum tercantum di skuad
+    t.squad = squad;
+    /* urutan batting tetap mengikuti array `players`, objeknya = objek skuad */
+    t.players = t.players.filter(isNamedPlayer).map(p=> byId[p.id]).filter(Boolean);
+  });
+}
+function teamSquad(match, key){
+  const t = match && match.teams && match.teams[key];
+  if(!t) return [];
+  if(!squadSynced(t)) normalizeSquads(match);
+  return t.squad;
+}
+function lineupHas(match, key, id){
+  return playersOf(match, key).some(p=> p.id===id);
+}
+/* centang / buang dari susunan main (urutan batting = urutan array) */
+function lineupToggle(match, key, id, on){
+  const t = match.teams[key]; if(!t) return false;
+  const p = teamSquad(match, key).find(x=> x.id===id); if(!p) return false;
+  const i = t.players.findIndex(x=> x.id===id);
+  if(on){ if(i<0) t.players.push(p); }
+  else if(i>=0){ t.players.splice(i,1); }
+  return true;
+}
+function lineupMove(match, key, id, dir){
+  const arr = playersOf(match, key);
+  const i = arr.findIndex(x=> x.id===id); if(i<0) return false;
+  const j = dir==='up' ? i-1 : i+1;
+  if(j<0 || j>=arr.length) return false;
+  const tmp = arr[i]; arr[i]=arr[j]; arr[j]=tmp;
+  return true;
+}
+function shirtTakenInSquad(match, key, shirt, exceptId){
+  const v = String(shirt==null?'':shirt).trim();
+  return teamSquad(match, key).some(p=> p.id!==exceptId && String(p.shirtNo)===v);
+}
+
+/* ---- kejadian scoring: pemain dirujuk lewat ID (batsman/bowler) dan lewat
+   NAMA (fielder pada wicket & anotasi catch jatuh). Dipakai untuk melindungi
+   atlet agar tidak dihapus / dikeluarkan dari susunan main. ---- */
+function evTouchesPlayer(ev, p, fielderCheck){
+  if(!ev || !p) return false;
+  if(ev.strikerId===p.id || ev.nonStrikerId===p.id || ev.bowlerId===p.id) return true;
+  if(ev.newId===p.id || ev.outId===p.id || ev.batsmanId===p.id) return true;
+  if(ev.wicket && (ev.wicket.outId===p.id || ev.wicket.newId===p.id)) return true;
+  if(fielderCheck){
+    const nm = String(p.name==null?'':p.name).trim();
+    if(nm){
+      if(ev.wicket && String(ev.wicket.fielder||'').trim()===nm) return true;
+      if(ev.dropCatch && String(ev.dropCatch.fielder||'').trim()===nm) return true;
+    }
+  }
+  return false;
+}
+function playerEventCount(match, key, p){
+  if(!match || !p) return 0;
+  let n = 0;
+  (match.innings||[]).forEach(inn=>{
+    if(!inn || !inn.events || !inn.events.length) return;
+    const fielding = inn.bowling===key;
+    const op = inn.opening;
+    if(op && (op.strikerId===p.id || op.nonStrikerId===p.id || op.bowlerId===p.id)) n++;
+    inn.events.forEach(ev=>{ if(evTouchesPlayer(ev, p, fielding)) n++; });
+  });
+  return n;
+}
+/* Event wicket/catch menyimpan NAMA fielder (bukan ID) -> saat nama diubah,
+   teks pada semua event tim fielding yang bersangkutan ikut diganti supaya
+   Scorebook dan Performa Atlet tetap konsisten. */
+function renameFielderRefs(match, key, oldName, newName){
+  const o = String(oldName==null?'':oldName).trim();
+  const nw = String(newName==null?'':newName).trim();
+  if(!o || o===nw) return;
+  (match.innings||[]).forEach(inn=>{
+    if(!inn || inn.bowling!==key) return;
+    (inn.events||[]).forEach(ev=>{
+      if(ev.wicket && String(ev.wicket.fielder||'').trim()===o) ev.wicket.fielder = nw;
+      if(ev.dropCatch && String(ev.dropCatch.fielder||'').trim()===o) ev.dropCatch.fielder = nw;
+    });
+  });
+}
+
+/* konfigurasi pertandingan mengikuti ukuran susunan main (pemain per tim,
+   wicket maksimal, minimum over per bowler) */
+function recalcMatchCfg(match){
+  const cfg = match && match.config; if(!cfg) return;
+  const minObb = minOversPerBowler(cfg.maxOvers, cfg.playersPerTeam);
+  const defObb = (FORMAT_DEFAULTS[match.format]||FORMAT_DEFAULTS.T20).maxOversPerBowler;
+  const _d = cfgDirtyOf(match.id);
+  if(!_d.maxOversPerBowler) cfg.maxOversPerBowler = Math.max(defObb, minObb);
+  else if(cfg.maxOversPerBowler < minObb) cfg.maxOversPerBowler = minObb;
+  if(!_d.maxWickets) cfg.maxWickets = Math.max(0, cfg.playersPerTeam-1);
+  if(cfg.maxWickets > Math.max(0,cfg.playersPerTeam-1)) cfg.maxWickets = Math.max(0,cfg.playersPerTeam-1);
+}
+function syncConfigToLineup(match){
+  const cfg = match && match.config; if(!cfg) return;
+  const a = playersOf(match,'A').length, b = playersOf(match,'B').length;
+  const n = Math.min(a,b);
+  if(n < 2) return;                                  // belum cukup untuk menentukan
+  cfg.playersPerTeam = Math.min(n, lineupMaxOf(match));
+  recalcMatchCfg(match);
+}
 
 /* =====================================================================
    PART 2 — SCORING ENGINE (single source of truth = events[])
@@ -1819,6 +2006,7 @@ function applyRemoteCounter(r){
 function applyRemoteCommit(){
   applyingRemote = true;
   try{
+    for(const id in DB.matches){ try{ normalizeSquads(DB.matches[id]); }catch(e){} }
     localStorage.setItem(STORE_KEY, JSON.stringify(DB));
     refreshSyncSigs();
   }catch(e){ console.warn('applyRemoteCommit', e); }
@@ -2103,22 +2291,12 @@ function renderSetup(){
     maxOversPerBowler: isT20?4:1,
     maxWickets: (isT20?11:6)-1
   };
+  /* skuad & susunan main: data lama ditautkan, konfigurasi ikut susunan main */
+  try{ normalizeSquads(m); syncConfigToLineup(m); }catch(e){ console.warn('skuad init', e); }
   const teamOpts = (sel)=> ['A','B'].map(k=>
     `<option value="${k}" ${sel===k?'selected':''}>${esc(teamName(m,k))}</option>`).join('');
   const autoResult = computeResult(m);
   const autoResultText = autoResult ? autoResult.text : '';
-  const roleBox = (p, f, lbl)=> `<label class="rolechip" title="${lbl}"><input type="checkbox" data-f="${f}" ${p[f]?'checked':''}> ${lbl}</label>`;
-  const pl = (key)=> m.teams[key].players.map((p,i)=>`
-    <tr data-team="${key}" data-i="${i}">
-      <td class="ctr" style="width:78px;white-space:nowrap">
-        <b style="color:#64748b;margin-right:3px">${i+1}</b>
-        <button class="iconbtn" data-ord="up" data-team="${key}" data-i="${i}" title="Naikkan urutan" ${i===0?'disabled style="opacity:.35"':''}>↑</button>
-        <button class="iconbtn" data-ord="down" data-team="${key}" data-i="${i}" title="Turunkan urutan" ${i===m.teams[key].players.length-1?'disabled style="opacity:.35"':''}>↓</button>
-      </td>
-      <td><input data-f="name" value="${esc(p.name)}" placeholder="Nama pemain"></td>
-      <td style="width:86px"><input data-f="shirtNo" value="${esc(p.shirtNo)}" placeholder="No." style="text-align:center"></td>
-      <td style="width:172px;white-space:nowrap">${roleBox(p,'isWK','WK')}${roleBox(p,'isBowler','Bowl')}${roleBox(p,'isCaptain','C')}</td>
-    </tr>`).join('');
 
   $('#view-setup').innerHTML = `
   <div class="page-head">
@@ -2148,7 +2326,8 @@ function renderSetup(){
         <input id="f_cfgObb" type="number" min="1" max="20" value="${cfg.maxOversPerBowler}">
         <div class="hint">Minimum otomatis = ceil(over ÷ pemain) = <b>${minOversPerBowler(cfg.maxOvers, cfg.playersPerTeam)}</b></div></div>
       <div class="field"><label>Jumlah Pemain per Tim</label>
-        <input id="f_cfgPlayers" type="number" min="2" max="15" value="${cfg.playersPerTeam}"></div>
+        <input id="f_cfgPlayers" type="number" min="2" max="15" value="${cfg.playersPerTeam}" readonly>
+        <div class="hint">Otomatis = jumlah <b>susunan main</b> (batas ${isT20?'11':'6'} pemain) — diatur lewat daftar skuad bawah.</div></div>
       <div class="field"><label>Jumlah Wicket Maksimal</label>
         <input id="f_cfgWickets" type="number" min="1" max="14" value="${cfg.maxWickets}">
         <div class="hint">Otomatis = pemain − 1 = <b>${Math.max(0, cfg.playersPerTeam-1)}</b>, tetap bisa diedit</div></div>
@@ -2215,23 +2394,9 @@ function renderSetup(){
     </div>
   </div>
 
-  <div class="grid2">
-    <div class="card">
-      <h3>🏏 Tim A <span class="badge">${cfg.playersPerTeam} pemain</span></h3>
-      <div class="field" style="margin-bottom:10px"><label>Nama Tim A</label><input id="f_teamA" value="${esc(m.teams.A.name)}" placeholder="Nama klub / tim"></div>
-      <table class="lv-table">
-        <thead><tr><th style="width:78px">Urutan</th><th>Nama Pemain</th><th style="width:86px">Shirt No.</th><th style="width:172px">Peran</th></tr></thead>
-        <tbody id="tblA">${pl('A')}</tbody>
-      </table>
-    </div>
-    <div class="card">
-      <h3>🏏 Tim B <span class="badge">${cfg.playersPerTeam} pemain</span></h3>
-      <div class="field" style="margin-bottom:10px"><label>Nama Tim B</label><input id="f_teamB" value="${esc(m.teams.B.name)}" placeholder="Nama klub / tim"></div>
-      <table class="lv-table">
-        <thead><tr><th style="width:78px">Urutan</th><th>Nama Pemain</th><th style="width:86px">Shirt No.</th><th style="width:172px">Peran</th></tr></thead>
-        <tbody id="tblB">${pl('B')}</tbody>
-      </table>
-    </div>
+  <div class="sq-teams">
+    ${teamCardHtml(m,'A')}
+    ${teamCardHtml(m,'B')}
   </div>
 
   <div class="card">
@@ -2282,30 +2447,23 @@ function renderSetup(){
   bind('#f_tossDec', v=> m.toss.decision=v);
 
   /* ---- Format & Aturan pertandingan ---- */
-  const recalcCfg = ()=>{
-    const minObb = minOversPerBowler(cfg.maxOvers, cfg.playersPerTeam);
-    const defObb = (FORMAT_DEFAULTS[m.format]||FORMAT_DEFAULTS.T20).maxOversPerBowler;
-    const _d = cfgDirtyOf(m.id);
-    if(!_d.maxOversPerBowler) cfg.maxOversPerBowler = Math.max(defObb, minObb);
-    else if(cfg.maxOversPerBowler < minObb) cfg.maxOversPerBowler = minObb;
-    if(!_d.maxWickets) cfg.maxWickets = Math.max(0, cfg.playersPerTeam-1);
-    if(cfg.maxWickets > Math.max(0,cfg.playersPerTeam-1)) cfg.maxWickets = Math.max(0,cfg.playersPerTeam-1);
-  };
-  const syncPlayersCount = ()=>{
-    const want = Math.max(2, cfg.playersPerTeam|0);
+  const recalcCfg = ()=> recalcMatchCfg(m);
+  /* ganti format: susunan main dipangkas ke batas format baru
+     (atlet yang sudah punya kejadian scoring dipertahankan) */
+  const trimLineupToFormat = ()=>{
+    const max = lineupMaxOf(m);
+    let dropped = 0;
     ['A','B'].forEach(k=>{
       const arr = m.teams[k].players;
-      while(arr.length < want){
-        arr.push({ id:uid(), name:'', shirtNo:String(arr.length+1), isWK:false, isBowler:false, isCaptain:false });
-      }
-      while(arr.length > want && arr.length > 2){
-        const last = arr[arr.length-1];
-        if(last && (last.name||'').trim() && arr.length > want){
-          if(!confirm('Pemain "'+last.name+'" akan dihapus karena jumlah pemain dikurangi. Lanjutkan?')) break;
-        }
-        arr.pop();
+      for(let i=arr.length-1;i>=0;i--){
+        if(arr.length <= max) break;
+        if(playerEventCount(m,k,arr[i])>0) continue;
+        arr.splice(i,1); dropped++;
       }
     });
+    if(dropped) toast(dropped+' atlet dikeluarkan dari susunan main (belum punya kejadian scoring)','warn');
+    if(m.teams.A.players.length>max || m.teams.B.players.length>max)
+      toast('Masih ada atlet berkejadian scoring melebihi batas '+max+' pemain — tidak bisa dikeluarkan otomatis','warn');
   };
   const fe = $('#f_format');
   if(fe) fe.onchange = ()=>{
@@ -2314,7 +2472,7 @@ function renderSetup(){
     const def = FORMAT_DEFAULTS[nf];
     confirmDialog('Ganti format ke '+nf+'?',
       'Jumlah over, pemain, batas over per bowler, dan wicket maksimal akan diisi ulang ke default '+nf+
-      ' ('+def.maxOvers+' over, '+def.playersPerTeam+' pemain). Data pemain yang sudah terisi tetap dipertahankan.',
+      ' ('+def.maxOvers+' over, '+def.playersPerTeam+' pemain). Data atlet di skuad tetap dipertahankan, susunan main dipangkas maks '+def.playersPerTeam+' pemain.',
       ()=>{
         m.format = nf;
         cfg.maxOvers = def.maxOvers;
@@ -2324,7 +2482,8 @@ function renderSetup(){
         const _d = cfgDirtyOf(m.id);
         _d.maxOversPerBowler = false;
         _d.maxWickets = false;
-        syncPlayersCount();
+        trimLineupToFormat();
+        syncConfigToLineup(m);
         saveDB(); renderSetup();
         toast('Format '+nf+' diterapkan','ok');
       }, 'Ganti Format');
@@ -2333,11 +2492,6 @@ function renderSetup(){
   if(fo) fo.onchange = ()=>{
     cfg.maxOvers = Math.max(1, Math.min(50, +fo.value||1));
     recalcCfg(); saveDB(); renderSetup();
-  };
-  const fp = $('#f_cfgPlayers');
-  if(fp) fp.onchange = ()=>{
-    cfg.playersPerTeam = Math.max(2, Math.min(15, +fp.value||2));
-    recalcCfg(); syncPlayersCount(); saveDB(); renderSetup();
   };
   const fob = $('#f_cfgObb');
   if(fob) fob.onchange = ()=>{
@@ -2351,30 +2505,11 @@ function renderSetup(){
     cfg.maxWickets = Math.max(1, Math.min(14, +fw.value||1));
     recalcCfg(); saveDB(); renderSetup();
   };
-  bind('#f_teamA', v=> m.teams.A.name=v);
-  bind('#f_teamB', v=> m.teams.B.name=v);
+  bind('#f_teamA', v=>{ m.teams.A.name=v; toggleCopyBtn(m,'A'); });
+  bind('#f_teamB', v=>{ m.teams.B.name=v; toggleCopyBtn(m,'B'); });
 
-  $$('#tblA input, #tblB input').forEach(inp=>{
-    const handler = ()=>{
-      const tr = inp.closest('tr');
-      const team = tr.dataset.team, i = +tr.dataset.i;
-      const f = inp.dataset.f;
-      if(!f) return;
-      m.teams[team].players[i][f] = (inp.type==='checkbox') ? !!inp.checked : inp.value;
-    };
-    inp.oninput = handler;
-    inp.onchange = handler;
-  });
-  $$('[data-ord]').forEach(btn=>{
-    btn.onclick = ()=>{
-      const team = btn.dataset.team, i = +btn.dataset.i;
-      const arr = m.teams[team].players;
-      const j = btn.dataset.ord==='up' ? i-1 : i+1;
-      if(j<0 || j>=arr.length) return;
-      const t = arr[i]; arr[i] = arr[j]; arr[j] = t;
-      saveDB(); renderSetup(); toast('Urutan batting diubah');
-    };
-  });
+  bindTeamCard(m,'A');
+  bindTeamCard(m,'B');
 
   const in1 = $('#f_in1bat');
   if(in1) in1.onchange = ()=>{
@@ -2407,8 +2542,8 @@ function renderSetup(){
 
 function validateSetup(m){
   const errs = [];
-  /* jumlah pemain wajib mengikuti konfigurasi pertandingan, bukan setting global */
-  const needN = rulesOf(m).playersPerTeam;
+  /* susunan main (m.teams[k].players) — minimal 2, maksimum mengikuti format */
+  const maxN = lineupMaxOf(m);
 
   if(!m.teams.A.name.trim()) errs.push('Nama Tim A belum diisi');
   if(!m.teams.B.name.trim()) errs.push('Nama Tim B belum diisi');
@@ -2419,23 +2554,32 @@ function validateSetup(m){
   if(!m.toss.decision) errs.push('Keputusan toss (Bat / Bowl) belum dipilih');
 
   ['A','B'].forEach(k=>{
-    const arr = m.teams[k].players;
-    if(arr.length !== needN)
-      errs.push(`Jumlah pemain ${teamName(m,k)} = ${arr.length}, format ${m.format} mensyaratkan ${needN} pemain`);
+    const arr = playersOf(m,k);
+    if(arr.length < 2)
+      errs.push(`Susunan main ${teamName(m,k)} = ${arr.length} atlet — minimal 2 atlet agar pertandingan bisa dimulai`);
+    if(arr.length > maxN){
+      const removable = arr.filter(p=> playerEventCount(m,k,p)===0).length;
+      errs.push(arr.length - removable > maxN
+        ? `${teamName(m,k)}: ${arr.length-removable} atlet sudah punya kejadian scoring dan tidak bisa dikeluarkan, melebihi batas ${maxN} pemain format ${m.format}`
+        : `Susunan main ${teamName(m,k)} = ${arr.length} atlet, batas format ${m.format} = ${maxN} — lepas ${arr.length-maxN} atlet yang belum bermain di Match Setup`);
+    }
     const shirts = {};
-    let wkCount = 0, named = 0;
+    let wkCount = 0;
     arr.forEach((p,i)=>{
-      if(p.name.trim()) named++;
+      const nm = String(p.name==null?'':p.name).trim();
       if(p.isWK) wkCount++;
       if(p.shirtNo && shirts[p.shirtNo]) errs.push(`Shirt No. ${p.shirtNo} duplikat di ${teamName(m,k)}`);
-      shirts[p.shirtNo]=1;
-      if(!p.name.trim() && i < needN) errs.push(`Pemain ${i+1} ${teamName(m,k)} belum diisi`);
-      if(p.name.trim() && !p.shirtNo) errs.push(`${p.name} (${teamName(m,k)}) belum punya Shirt No.`);
+      if(p.shirtNo) shirts[p.shirtNo]=1;
+      if(!nm) errs.push(`Atlet ke-${i+1} susunan main ${teamName(m,k)} belum diisi namanya`);
+      else if(!p.shirtNo) errs.push(`${nm} (${teamName(m,k)}) belum punya Shirt No.`);
     });
-    if(named < needN) errs.push(`${teamName(m,k)} baru mengisi ${named} dari ${needN} pemain`);
-    if(needN>=6 && wkCount===0) errs.push(`${teamName(m,k)} belum menentukan Wicketkeeper (peran WK)`);
-    if(needN>=6 && wkCount>1) errs.push(`${teamName(m,k)} memiliki ${wkCount} Wicketkeeper, cukup 1`);
+    if(arr.length>=6 && wkCount===0) errs.push(`${teamName(m,k)} belum menentukan Wicketkeeper (peran WK)`);
+    if(arr.length>=6 && wkCount>1) errs.push(`${teamName(m,k)} memiliki ${wkCount} Wicketkeeper, cukup 1`);
   });
+
+  const minLine = Math.min(playersOf(m,'A').length, playersOf(m,'B').length);
+  if(minLine >= 2 && rulesOf(m).maxWickets > minLine-1)
+    errs.push(`Maksimal Wicket (${rulesOf(m).maxWickets}) melebihi susunan main terkecil (${minLine} atlet) — turunkan di bagian Format & Aturan`);
 
   if(errs.length){
     openModal('Setup belum lengkap', `
@@ -2445,6 +2589,430 @@ function validateSetup(m){
     return false;
   }
   return true;
+}
+
+/* =====================================================================
+   MATCH SETUP — SKUAD, SUSUNAN MAIN & TAMBAH ATLET
+   ===================================================================== */
+let SQ_SEARCH = { A:'', B:'' };
+
+/* skuad dari tim bernama sama di pertandingan lain (paling baru) */
+function prevSquadSource(match, key){
+  const want = String((match.teams[key]||{}).name||'').trim().toLowerCase();
+  if(!want) return null;
+  const list = Object.keys(DB.matches).map(id=>DB.matches[id])
+    .filter(x=> x && x.id!==match.id)
+    .sort((a,b)=> (b.createdAt||0)-(a.createdAt||0));
+  for(let i=0;i<list.length;i++){
+    const x = list[i];
+    for(const k of ['A','B']){
+      const t = x.teams && x.teams[k];
+      if(!t) continue;
+      if(String(t.name||'').trim().toLowerCase()!==want) continue;
+      const raw = Array.isArray(t.squad) ? t.squad : (Array.isArray(t.players) ? t.players : []);
+      const sq = raw.filter(p=> isNamedPlayer(p));
+      if(sq.length) return { match:x, key:k, squad:sq };
+    }
+  }
+  return null;
+}
+function toggleCopyBtn(match, key){
+  const el = document.getElementById('sqCopy_'+key);
+  if(!el) return;
+  el.style.display = prevSquadSource(match, key) ? '' : 'none';
+}
+function copySquadFromPrev(match, key){
+  const src = prevSquadSource(match, key);
+  if(!src){ toast('Belum ada pertandingan sebelumnya dengan nama tim yang sama','warn'); return; }
+  const t = match.teams[key];
+  if(t.players.some(p=> playerEventCount(match,key,p)>0)){
+    toast('Tidak bisa menyalin: susunan main berisi atlet yang sudah punya kejadian scoring','err');
+    return;
+  }
+  const apply = ()=>{
+    t.squad = src.squad.map(p=>({
+      id: uid(), name: String(p.name||''), shirtNo: String(p.shirtNo||''),
+      isWK: !!p.isWK, isBowler: !!p.isBowler, isCaptain: !!p.isCaptain
+    }));
+    t.players = [];
+    SQ_SEARCH[key] = '';
+    saveDB(); renderSetup();
+    toast(src.squad.length+' atlet disalin dari '+teamName(src.match,src.key)+' — pilih ulang susunan main','ok');
+  };
+  const cur = t.squad.length + t.players.length;
+  if(cur>0){
+    confirmDialog('Pakai skuad dari pertandingan sebelumnya',
+      'Skuad '+teamName(match,key)+' saat ini ('+cur+' atlet) akan diganti dengan '+src.squad.length+
+      ' atlet dari '+teamName(src.match,src.key)+(src.match.date? ' ('+src.match.date+')':'')+
+      '. Susunan main dikosongkan dan dipilih ulang. Lanjutkan?', apply, 'Ganti Skuad');
+  } else apply();
+}
+
+function teamCardHtml(match, key){
+  const sq = teamSquad(match, key);
+  const line = playersOf(match, key);
+  const maxN = lineupMaxOf(match);
+  const full = line.length >= maxN;
+  const q = String(SQ_SEARCH[key]||'').trim().toLowerCase();
+  const src = prevSquadSource(match, key);
+  const nameCount = {};
+  sq.forEach(p=>{ const n = String(p.name||'').trim().toLowerCase(); if(n) nameCount[n]=(nameCount[n]||0)+1; });
+
+  const rows = [];
+  sq.forEach((p,i)=>{
+    if(q && !(String(p.name||'').toLowerCase().includes(q) || String(p.shirtNo||'').toLowerCase().includes(q))) return;
+    const inLine = lineupHas(match,key,p.id);
+    const nm = String(p.name||'').trim();
+    const dup = !!nm && nameCount[nm.toLowerCase()]>1;
+    const blocked = full && !inLine;
+    const chip = (f,lbl)=> `<label class="rolechip" title="Peran ${lbl}"><input type="checkbox" data-role="${f}" data-id="${p.id}" ${p[f]?'checked':''}> ${lbl}</label>`;
+    rows.push(`<tr>
+      <td class="ctr" style="width:36px;color:#94a3b8">${i+1}</td>
+      <td><b>${esc(nm)}</b>${dup?` <span class="sq-warn" title="Nama sama dengan atlet lain di tim ini. Performa Atlet mengenali pemain lewat nama + tim — tetap boleh disimpan.">⚠</span>`:''}</td>
+      <td class="ctr" style="width:66px"><span class="sq-no">${esc(p.shirtNo)}</span></td>
+      <td style="width:170px;white-space:nowrap">${chip('isWK','WK')}${chip('isBowler','Bowl')}${chip('isCaptain','C')}</td>
+      <td class="ctr" style="width:54px"><input class="sq-main" type="checkbox" data-main="${p.id}"
+        ${inLine?'checked':''} ${blocked?'disabled':''}
+        title="${blocked ? ('Susunan main sudah penuh ('+line.length+'/'+maxN+')') : (inLine? 'Ada di susunan main — hapus centang untuk mengeluarkan' : 'Centang untuk masuk susunan main')}"></td>
+      <td style="width:88px"><div class="at-actions">
+        <button class="iconbtn" data-sqedit="${p.id}" title="Edit nama &amp; Shirt No.">✎</button>
+        <button class="iconbtn danger" data-sqdel="${p.id}" title="Hapus dari skuad">🗑</button>
+      </div></td>
+    </tr>`);
+  });
+  if(!rows.length){
+    rows.push(`<tr><td colspan="6"><div class="empty" style="padding:18px">${
+      q ? 'Tidak ada atlet yang cocok dengan pencarian "<b>'+esc(q)+'</b>".'
+        : 'Belum ada atlet di skuad — klik <b>＋ Tambah Atlet</b> atau <b>＋ Tambah Banyak</b>.'}</div></td></tr>`);
+  }
+
+  return `<div class="card" id="sqCard_${key}">
+    <h3>🏏 ${esc(teamName(match,key))} — Skuad
+      <span class="badge">${sq.length} atlet</span>
+      <span class="badge">Susunan main ${line.length}/${maxN}</span></h3>
+    <div class="field" style="margin-bottom:10px"><label>Nama Tim ${key}</label>
+      <input id="f_team${key}" value="${esc(match.teams[key].name||'')}" placeholder="Nama klub / tim"></div>
+
+    <div class="sq-actions">
+      <button class="btn sm" id="sqAdd_${key}">＋ Tambah Atlet</button>
+      <button class="btn sm secondary" id="sqBulk_${key}">＋ Tambah Banyak</button>
+      <button class="btn sm ghost" id="sqCopy_${key}" ${src?'':'style="display:none"'}>↩ Pakai skuad dari pertandingan sebelumnya</button>
+    </div>
+
+    <div class="sq-tools">
+      <input id="sqSearch_${key}" placeholder="🔍 Cari nama / shirt no..." value="${esc(SQ_SEARCH[key]||'')}">
+      <span class="chip live">${sq.length} atlet skuad</span>
+      ${line.length>maxN? '<span class="chip draft" style="background:#fee2e2;color:#991b1b">Susunan main melebihi batas '+maxN+'</span>':''}
+    </div>
+
+    <div class="at-tablewrap">
+      <table class="lv-table sq-table">
+        <thead><tr>
+          <th class="ctr" style="width:36px">No</th>
+          <th>Nama</th>
+          <th class="ctr" style="width:66px">Shirt No.</th>
+          <th style="width:170px">Peran</th>
+          <th class="ctr" style="width:54px">Main</th>
+          <th style="width:88px">Aksi</th>
+        </tr></thead>
+        <tbody>${rows.join('')}</tbody>
+      </table>
+    </div>
+
+    <div class="sq-lineup">
+      <div class="sq-lp-head">Urutan batting — susunan main
+        <span class="chip ${line.length>maxN?'draft':'live'}" id="sqCount_${key}">Susunan main: ${line.length}/${maxN}</span></div>
+      ${line.length ? `<ol class="sq-ord">${line.map((p,i)=>`
+        <li>
+          <span class="sq-pos">${i+1}</span>
+          <span class="sq-nm">${esc(p.name)} <i>${esc(p.shirtNo)}</i>${p.isWK?' <b class="sq-tag">WK</b>':''}</span>
+          <span class="sq-acts">
+            <button class="iconbtn" data-lo="up" data-id="${p.id}" title="Naikkan urutan batting" ${i===0?'disabled':''}>↑</button>
+            <button class="iconbtn" data-lo="down" data-id="${p.id}" title="Turunkan urutan batting" ${i===line.length-1?'disabled':''}>↓</button>
+            <button class="iconbtn danger" data-lo="out" data-id="${p.id}" title="Keluarkan dari susunan main">✕</button>
+          </span>
+        </li>`).join('')}</ol>`
+      : `<div class="empty" style="padding:16px">Belum ada atlet dipilih — centang kolom <b>Main</b> pada daftar skuad di atas.</div>`}
+      <div style="font-size:11.5px;color:#64748b;margin-top:8px">Urutan inilah yang dipakai sebagai batsman 1–${maxN} di Scorebook dan sebagai daftar pilihan pemain di Scoring Pad.</div>
+    </div>
+  </div>`;
+}
+
+function bindTeamCard(match, key){
+  const root = $('#sqCard_'+key);
+  if(!root) return;
+  const maxN = lineupMaxOf(match);
+  const changed = (msg)=>{
+    syncConfigToLineup(match);
+    saveDB();
+    renderSetup();
+    if(msg) toast(msg,'ok');
+  };
+  const byId = id => teamSquad(match,key).filter(x=> x.id===id)[0] || null;
+
+  const add = $('#sqAdd_'+key, root); if(add) add.onclick = ()=> openSquadForm(match,key,null);
+  const bulk = $('#sqBulk_'+key, root); if(bulk) bulk.onclick = ()=> openBulkSquad(match,key);
+  const cp = $('#sqCopy_'+key, root); if(cp) cp.onclick = ()=> copySquadFromPrev(match,key);
+  toggleCopyBtn(match,key);
+
+  const s = $('#sqSearch_'+key, root);
+  if(s) s.oninput = ()=>{
+    SQ_SEARCH[key] = s.value;
+    const pos = s.selectionStart;
+    renderSetup();
+    const n = $('#sqSearch_'+key);
+    if(n){ n.focus(); try{ n.setSelectionRange(pos,pos); }catch(e){} }
+  };
+
+  $$('[data-main]', root).forEach(el=> el.onchange = ()=>{
+    const id = el.dataset.main, p = byId(id);
+    if(el.checked){
+      if(playersOf(match,key).length >= maxN){
+        el.checked = false;
+        toast('Susunan main sudah penuh ('+maxN+'/'+maxN+') — keluarkan satu atlet dulu','warn');
+        return;
+      }
+      lineupToggle(match,key,id,true);
+      changed('Masuk susunan main');
+    } else {
+      const n = p ? playerEventCount(match,key,p) : 0;
+      if(n>0){
+        el.checked = true;
+        toast('Tidak bisa dikeluarkan: '+(p?p.name:'Atlet')+' sudah punya '+n+' kejadian scoring (memukul / melempar / fielder)','err');
+        return;
+      }
+      lineupToggle(match,key,id,false);
+      changed('Dikeluarkan dari susunan main');
+    }
+  });
+
+  $$('[data-role]', root).forEach(el=> el.onchange = ()=>{
+    const p = byId(el.dataset.id); if(!p) return;
+    p[el.dataset.role] = !!el.checked;
+    saveDB();
+  });
+
+  $$('[data-sqedit]', root).forEach(el=> el.onclick = ()=> openSquadForm(match,key,el.dataset.sqedit));
+
+  $$('[data-sqdel]', root).forEach(el=> el.onclick = ()=>{
+    const id = el.dataset.sqdel, p = byId(id);
+    if(!p) return;
+    const n = playerEventCount(match,key,p);
+    if(n>0){
+      toast('Tidak bisa dihapus: '+p.name+' sudah punya '+n+' kejadian scoring (memukul / melempar / fielder)','err');
+      return;
+    }
+    confirmDialog('Hapus Atlet',
+      'Hapus "'+p.name+'" ('+(p.shirtNo||'-')+') dari skuad '+teamName(match,key)+'?',
+      ()=>{
+        const sq = teamSquad(match,key);
+        const i = sq.indexOf(p);
+        if(i>=0) sq.splice(i,1);
+        lineupToggle(match,key,id,false);
+        changed('Atlet dihapus dari skuad');
+      }, 'Hapus');
+  });
+
+  $$('[data-lo]', root).forEach(el=> el.onclick = ()=>{
+    const id = el.dataset.id, act = el.dataset.lo;
+    if(act==='out'){
+      const p = byId(id);
+      const n = p ? playerEventCount(match,key,p) : 0;
+      if(n>0){ toast('Tidak bisa dikeluarkan: '+p.name+' sudah punya '+n+' kejadian scoring (memukul / melempar / fielder)','err'); return; }
+      lineupToggle(match,key,id,false);
+      changed('Dikeluarkan dari susunan main');
+      return;
+    }
+    if(lineupMove(match,key,id,act)) changed('Urutan batting diubah');
+  });
+}
+
+/* ---------- Tambah Atlet (satu per satu) ---------- */
+function openSquadForm(match, key, editId){
+  const sq = teamSquad(match, key);
+  const ex = editId ? sq.filter(p=> p.id===editId)[0] : null;
+  openModal((ex? 'Edit Atlet — ' : 'Tambah Atlet — ')+teamName(match,key), `
+    <div class="field" id="sfw_nama"><label>${ex?'Nama Lengkap':'Nama'} *</label>
+      <input id="sf_nama" autocomplete="off" placeholder="mis. Budi Santoso" value="${ex?esc(ex.name):''}">
+      <div class="field-err" id="sfe_nama"></div></div>
+    <div class="field" id="sfw_no" style="margin-top:6px"><label>Shirt No. *</label>
+      <input id="sf_no" type="number" min="1" max="999" placeholder="1 – 999" value="${ex?esc(ex.shirtNo):''}">
+      <div class="field-err" id="sfe_no"></div></div>
+    <div class="warnbar" id="sf_dup" style="display:none;margin-top:4px;margin-bottom:0"></div>
+    ${ex? '' : '<div class="hintbar" style="margin-top:12px;margin-bottom:0">Shirt No. harus unik dalam satu tim. Pakai <b>Simpan & tambah lagi</b> bila ingin form otomatis dikosongkan untuk input berikutnya.</div>'}
+  `, [
+    {label:'Batal', cls:'secondary', fn:closeModal},
+    {label:'💾 Simpan', cls:'', fn:()=> saveSquadForm(match,key,ex,null)}
+  ].concat(ex? [] : [{label:'💾 Simpan & tambah lagi', cls:'secondary', fn:()=> saveSquadForm(match,key,null,'again')}]));
+  setTimeout(()=>{ const el = $('#sf_nama'); if(el) el.focus(); }, 60);
+}
+function saveSquadForm(match, key, ex, mode){
+  const sq = teamSquad(match, key);
+  const nameEl = $('#sf_nama'), noEl = $('#sf_no');
+  if(!nameEl || !noEl) return false;
+  const name = String(nameEl.value||'').trim();
+  const shirtRaw = String(noEl.value||'').trim();
+  const setErr = (w,e,msg)=>{ const we=$(w), ee=$(e); if(we) we.classList.toggle('has-err', !!msg); if(ee) ee.textContent = msg||''; };
+  setErr('#sfw_nama','#sfe_nama','');
+  setErr('#sfw_no','#sfe_no','');
+  const dupBox = $('#sf_dup');
+  if(dupBox){ dupBox.style.display = 'none'; dupBox.innerHTML = ''; }
+
+  let ok = true;
+  if(!name){ setErr('#sfw_nama','#sfe_nama','Nama wajib diisi'); ok = false; }
+  const noNum = Number(shirtRaw);
+  if(!shirtRaw){ setErr('#sfw_no','#sfe_no','Shirt No. wajib diisi'); ok = false; }
+  else if(!/^\d+$/.test(shirtRaw) || noNum<1 || noNum>999){ setErr('#sfw_no','#sfe_no','Shirt No. harus angka 1–999'); ok = false; }
+  else if(shirtTakenInSquad(match,key,noNum, ex?ex.id:null)){ setErr('#sfw_no','#sfe_no','Shirt No. '+shirtRaw+' sudah dipakai atlet lain di tim ini'); ok = false; }
+  if(ok && sq.some(p=> p!==ex && String(p.name||'').trim().toLowerCase()===name.toLowerCase()) && dupBox){
+    dupBox.style.display = '';
+    dupBox.innerHTML = '⚠ Nama <b>'+esc(name)+'</b> sama dengan atlet lain di tim ini. Boleh disimpan, tetapi Performa Atlet mengenali pemain lewat <b>nama + tim</b>.';
+  }
+  if(!ok) return false;
+
+  if(ex){
+    const oldName = ex.name;
+    ex.name = name;
+    ex.shirtNo = shirtRaw;
+    if(String(oldName||'').trim() !== name) renameFielderRefs(match, key, oldName, name);
+    closeModal(); saveDB(); renderSetup();
+    toast('Atlet diperbarui','ok');
+    return true;
+  }
+  sq.push({ id:uid(), name:name, shirtNo:shirtRaw, isWK:false, isBowler:false, isCaptain:false });
+  saveDB(); renderSetup();
+  toast('Atlet ditambahkan ke skuad '+teamName(match,key),'ok');
+  if(mode==='again'){
+    nameEl.value = ''; noEl.value = '';
+    setErr('#sfw_nama','#sfe_nama',''); setErr('#sfw_no','#sfe_no','');
+    setTimeout(()=>{ const el = $('#sf_nama'); if(el) el.focus(); }, 30);
+  } else {
+    closeModal();
+  }
+  return true;
+}
+/* ---------- Tambah banyak atlet sekaligus ---------- */
+function parseBulkText(text){
+  return String(text==null?'':text).split(/\r?\n/).map(line=>{
+    if(!line.trim()) return null;
+    let name = '', shirt = '';
+    if(line.indexOf('\t') >= 0){
+      const c = line.split('\t');
+      name = String(c[0]||'').trim();
+      shirt = String(c[1]||'').trim();
+    } else if(line.lastIndexOf(',') >= 0){
+      const i = line.lastIndexOf(',');
+      name = line.slice(0,i).trim();
+      shirt = line.slice(i+1).trim();
+    } else {
+      name = line.trim();
+    }
+    return { name:name, shirt:shirt };
+  }).filter(Boolean);
+}
+function openBulkSquad(match, key){
+  const sq = teamSquad(match, key);
+  let rows = [];
+
+  const validate = ()=>{
+    const used = {}, squadShirts = {};
+    sq.forEach(p=>{ squadShirts[String(p.shirtNo)] = 1; });
+    let count = 0;
+    return rows.map((r,i)=>{
+      const res = { ok:true, reason:'', dupName:false };
+      const nm = String(r.name||'').trim();
+      const sh = String(r.shirt||'').trim();
+      if(!nm){ res.ok = false; res.reason = 'Nama kosong'; }
+      else if(!sh){ res.ok = false; res.reason = 'Nomor kosong'; }
+      else if(!/^\d+$/.test(sh) || +sh<1 || +sh>999){ res.ok = false; res.reason = 'Nomor harus angka 1–999'; }
+      else if(squadShirts[sh]){ res.ok = false; res.reason = 'Nomor '+sh+' sudah dipakai di skuad'; }
+      else if(used[sh] != null){ res.ok = false; res.reason = 'Nomor kembar dengan baris '+(used[sh]+1); }
+      else if(sq.length + count >= SQUAD_MAX){ res.ok = false; res.reason = 'Melebihi batas skuad ('+SQUAD_MAX+' atlet)'; }
+      else { used[sh] = i; count++; }
+      res.dupName = !!nm && (
+        sq.some(p=> String(p.name||'').trim().toLowerCase()===nm.toLowerCase()) ||
+        rows.some((x,j)=> j!==i && String(x.name||'').trim().toLowerCase()===nm.toLowerCase()));
+      return res;
+    });
+  };
+
+  const paint = ()=>{
+    const res = validate();
+    const okN = res.filter(r=> r.ok).length;
+    const badN = res.length - okN;
+    $('#bk_prev').innerHTML = `
+      <div class="sq-tools" style="margin-top:12px">
+        <span class="chip live">${okN} baris valid</span>
+        <span class="chip draft" style="${badN?'background:#fee2e2;color:#991b1b':''}">${badN} bermasalah</span>
+        <span style="font-size:11.5px;color:#64748b">Baris merah harus diperbaiki — hanya baris valid yang ditambahkan.</span>
+      </div>
+      <div class="at-tablewrap bk-prev">
+        <table class="lv-table">
+          <thead><tr>
+            <th class="ctr" style="width:44px">Baris</th><th>Nama</th>
+            <th style="width:110px">Nomor</th><th style="width:210px">Keterangan</th>
+          </tr></thead>
+          <tbody>${res.map((r,i)=>`
+            <tr data-brow="${i}" class="${r.ok?'':'bad'}">
+              <td class="ctr" style="color:#94a3b8">${i+1}</td>
+              <td><input data-bk="name" data-i="${i}" value="${esc(rows[i].name)}" placeholder="Nama atlet"></td>
+              <td><input data-bk="shirt" data-i="${i}" value="${esc(rows[i].shirt)}" inputmode="numeric" placeholder="Nomor"></td>
+              <td class="bk-reason">${r.ok ? (r.dupName? '<span class="bk-warn">⚠ nama kembar — tetap boleh</span>' : '<span style="color:#16a34a">siap ditambahkan</span>') : esc(r.reason)}</td>
+            </tr>`).join('')}</tbody>
+        </table>
+      </div>
+      ${sq.length>=SQUAD_MAX? `<div class="warnbar" style="margin-top:10px;margin-bottom:0">Skuad sudah penuh (${SQUAD_MAX} atlet).</div>`:''}`;
+    refresh();
+  };
+  const refresh = ()=>{
+    const res = validate();
+    $$('#bk_prev [data-brow]').forEach(tr=>{
+      const i = +tr.dataset.brow;
+      const r = res[i]; if(!r) return;
+      tr.classList.toggle('bad', !r.ok);
+      const cell = tr.querySelector('.bk-reason');
+      if(cell) cell.innerHTML = r.ok ? (r.dupName? '<span class="bk-warn">⚠ nama kembar — tetap boleh</span>' : '<span style="color:#16a34a">siap ditambahkan</span>') : esc(r.reason);
+    });
+  };
+
+  openModal('Tambah Banyak Atlet — '+teamName(match,key), `
+    <div class="field">
+      <label>Satu atlet per baris — format: Nama, Nomor</label>
+      <textarea id="bk_text" rows="6" style="resize:vertical" placeholder="Budi Santoso, 7&#10;Andi Wijaya, 8&#10;Rudi Hartono, 9"></textarea>
+      <div class="hint">Nomor wajib angka 1–999 dan unik dalam satu tim. Bisa juga tempel langsung dari Excel — kolom Nama lalu kolom Nomor (dipisah Tab).</div>
+    </div>
+    <div id="bk_prev"></div>
+  `, [
+    {label:'Batal', cls:'secondary', fn:closeModal},
+    {label:'✚ Tambahkan', cls:'', fn:()=>{
+      const res = validate();
+      let added = 0, skipped = 0;
+      rows.forEach((r,i)=>{
+        if(!res[i].ok){ skipped++; return; }
+        sq.push({ id:uid(), name:String(r.name).trim(), shirtNo:String(r.shirt).trim(),
+                  isWK:false, isBowler:false, isCaptain:false });
+        added++;
+      });
+      closeModal();
+      if(added){ syncConfigToLineup(match); saveDB(); renderSetup(); }
+      toast(added? (added+' atlet ditambahkan'+(skipped? ', '+skipped+' baris dilewati':''))
+                 : 'Tidak ada baris valid yang bisa ditambahkan',
+            added? 'ok' : 'warn');
+    }}
+  ], {wide:true});
+
+  const ta = $('#bk_text');
+  ta.oninput = ()=>{ rows = parseBulkText(ta.value); paint(); };
+  $('#bk_prev').addEventListener('input', e=>{
+    const inp = e.target;
+    if(!inp || !inp.dataset || inp.dataset.bk==null) return;
+    const i = +inp.dataset.i;
+    if(!rows[i]) return;
+    rows[i][inp.dataset.bk] = inp.value;
+    refresh();
+  });
+  paint();
+  setTimeout(()=>{ const el = $('#bk_text'); if(el) el.focus(); }, 60);
 }
 
 function startInning(idx){
@@ -2472,6 +3040,12 @@ function openOpeningDialog(idx){
   const inning = m.innings[idx];
   const bat = battingPlayers(m, inning);
   const bowl = bowlingPlayers(m, inning);
+  const named = arr => arr.filter(p=> String(p.name==null?'':p.name).trim()).length;
+  if(named(bat)<2 || named(bowl)<2){
+    toast('Susunan main belum lengkap — minimal 2 atlet per tim. Lengkapi di Match Setup.','warn');
+    setView('setup');
+    return;
+  }
   const opts = arr => arr.map(p=>`<option value="${p.id}">${esc(p.name||'Pemain')} (${esc(p.shirtNo||'-')})</option>`).join('');
   openModal(`Mulai Inning ${idx+1} — ${teamName(m,inning.batting)} memukul`, `
     <div class="form-row">
@@ -4135,6 +4709,7 @@ function importJSON(e){
         ()=>{
           DB = Object.assign({matches:{},settings:clone(DEFAULT_SETTINGS),currentMatchId:null}, incoming);
           DB.settings = Object.assign(clone(DEFAULT_SETTINGS), incoming.settings||{});
+          for(const id in DB.matches){ try{ normalizeSquads(DB.matches[id]); }catch(e){} }
           undoStacks = {};
           saveDB(); renderView(CURRENT_VIEW); renderTopbar();
           toast('Data berhasil diimpor','ok');
